@@ -20,6 +20,7 @@ import {
 } from './media-loader';
 import { renderMarkdown } from './markdown';
 import type { Publication } from './content-types';
+import { normalizePublication } from './publication-utils';
 
 export type {
   AboutPageData,
@@ -136,7 +137,7 @@ export async function loadAboutPage(): Promise<AboutPageData> {
 export async function loadPublications(): Promise<Publication[]> {
   return Object.entries(PUBLICATION_MODULES)
     .sort(([pathA], [pathB]) => compareNatural(pathA, pathB))
-    .map(([, mod]) => mod.default)
+    .map(([filePath, mod]) => normalizePublication(mod.default, filePath))
     .filter(Boolean)
     .sort((a, b) => compareNatural(b.date, a.date));
 }

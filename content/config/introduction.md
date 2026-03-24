@@ -1,4 +1,3 @@
-[![Homepage](https://img.shields.io/badge/Homepage-2B51B6)](https://rcvlab.eee.sustech.edu.cn/authors/zanjia_tong/)
 [![Email](https://img.shields.io/badge/Email-000000?logo=gmail)](mailto:tongzanjia@qq.com)
 [![GitHub](https://img.shields.io/badge/GitHub-100000?logo=github)](https://github.com/Instinct323)
 [![Google Scholar](https://img.shields.io/badge/Google%20Scholar-333333?logo=google-scholar)](https://scholar.google.com/citations?user=Zanjia_Tong)

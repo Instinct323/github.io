@@ -2,7 +2,6 @@ import type { ImageMetadata } from 'astro';
 
 export interface ProfileFact {
   id: string;
-  label: string;
   value: string;
 }
 
@@ -30,8 +29,7 @@ export interface Publication {
   authors: string[];
   date: string;
   source?: string;
-  doi?: string;
-  code?: string;
+  links?: Record<string, string>;
 }
 
 export interface SiteConfig {

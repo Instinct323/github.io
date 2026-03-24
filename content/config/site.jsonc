@@ -1,5 +1,4 @@
 {
-  // Owned by content maintainers; consumed by src/lib/config-loader.ts via jsonc-parser.
   // Owned by SEO/content editors; consumed by metadata loaders and route-level head builders.
   "metadata": {
     "siteUrl": "https://instinct323.github.io/",

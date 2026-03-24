@@ -9,14 +9,11 @@ const { facts } = Astro.props;
 
 const renderedFacts = facts
   .map((fact) => ({
-    // Facts stay config-driven, but this keeps machine-style labels readable if config uses ids.
-    label: /[A-Za-z]/.test(fact.label)
-      ? fact.label
-          .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-          .replace(/[_-]+/g, ' ')
-          .replace(/\b\w/g, (char) => char.toUpperCase())
-          .trim()
-      : fact.label,
+    label: fact.id
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .replace(/[_-]+/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase())
+      .trim(),
     value: fact.value.trim(),
   }))
   .filter((fact): fact is { label: string; value: string } => Boolean(fact.label && fact.value));

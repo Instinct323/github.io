@@ -3,6 +3,7 @@
 // Shows list of publications with title, authors, date, and links
 
 import type { Publication } from '../../lib/content-types';
+import { resolvePublicationLinks } from '../../lib/publication-utils';
 
 interface Props {
   publications: Publication[];
@@ -44,26 +45,17 @@ const { publications, highlightAuthor } = Astro.props as Props;
                 Abstract
               </button>
             )}
-            {publication.doi && (
+            {resolvePublicationLinks(publication).map((link) => (
               <a
                 class="publication-link-button"
-                href={`https://doi.org/${publication.doi}`}
+                href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
+                data-link-name={link.name}
               >
-                DOI
+                {link.label}
               </a>
-            )}
-            {publication.code && (
-              <a
-                class="publication-link-button"
-                href={publication.code}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Code
-              </a>
-            )}
+            ))}
           </div>
           {publication.abstract && (
             <p id={`publication-abstract-${publicationIndex}`} class="publication-abstract" hidden>

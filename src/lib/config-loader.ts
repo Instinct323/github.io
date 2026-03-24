@@ -230,7 +230,6 @@ function normalizeProfile(profileData: ProfileData): ProfileData {
     ...profileData,
     facts: profileData.facts.map((fact) => ({
       id: fact.id.trim(),
-      label: fact.label.trim(),
       value: fact.value.trim(),
     })),
   };
