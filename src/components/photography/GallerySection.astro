@@ -1,0 +1,100 @@
+---
+import GalleryGrid from './GalleryGrid.astro';
+import type { GridColumns, MediaAlbum, MediaImage } from '../../lib/content-loader';
+
+interface Props {
+  sectionId: string;
+  sectionTitle: string;
+  images: MediaImage[];
+  sectionTestId: string;
+  albums?: MediaAlbum[];
+  columns: GridColumns;
+  gap: string;
+  prioritizeAboveFold?: boolean;
+}
+
+const {
+  sectionId,
+  sectionTitle,
+  images,
+  sectionTestId,
+  albums,
+  columns,
+  gap,
+  prioritizeAboveFold = false,
+} = Astro.props;
+const hasAlbums = (albums?.length ?? 0) > 0;
+const hasDirectImages = images.length > 0;
+---
+
+<section id={sectionId} data-testid={sectionTestId} class="gallery-section card">
+  <h2 class="section-title" data-testid={`gallery-section-title-${sectionId}`}>{sectionTitle}</h2>
+  
+  {hasAlbums && albums?.map((album, albumIndex) => (
+    <div class="album-subsection" data-testid={`album-${album.id}`}>
+      <h3 class="album-title">{album.title}</h3>
+      <GalleryGrid
+        images={album.images}
+        emptyLabel={album.title}
+        columns={columns}
+        gap={gap}
+        eagerCount={prioritizeAboveFold && albumIndex === 0 ? 6 : 0}
+      />
+    </div>
+  ))}
+  
+  {hasDirectImages && (
+    <GalleryGrid
+      images={images}
+      emptyLabel={sectionTitle}
+      columns={columns}
+      gap={gap}
+      eagerCount={prioritizeAboveFold && !hasAlbums ? 6 : 0}
+    />
+  )}
+</section>
+
+<style>
+  .gallery-section {
+    margin-bottom: var(--space-section-md);
+    scroll-margin-top: var(--section-anchor-scroll-margin);
+  }
+
+  .section-title {
+    margin: 0 0 var(--space-stack-md) 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--gallery-title-color, #102a43);
+    letter-spacing: -0.015em;
+  }
+
+  .album-subsection {
+    margin-bottom: var(--space-stack-lg);
+  }
+
+  .album-subsection:last-child {
+    margin-bottom: 0;
+  }
+
+  .album-title {
+    margin: 0 0 var(--space-stack-sm) 0;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--gallery-subtitle-color, #243b53);
+    letter-spacing: -0.005em;
+  }
+
+  @media (max-width: 767px) {
+    .gallery-section {
+      margin-bottom: var(--space-section-sm);
+    }
+
+    .section-title {
+      font-size: 1.125rem;
+    }
+
+    .album-title {
+      font-size: 0.9375rem;
+    }
+  }
+</style>

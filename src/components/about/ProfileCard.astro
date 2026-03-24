@@ -1,0 +1,84 @@
+---
+import type { ProfileFact } from '../../lib/content-loader';
+
+interface Props {
+  facts: ProfileFact[];
+}
+
+const { facts } = Astro.props;
+
+const renderedFacts = facts
+  .map((fact) => ({
+    // Facts stay config-driven, but this keeps machine-style labels readable if config uses ids.
+    label: /[A-Za-z]/.test(fact.label)
+      ? fact.label
+          .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+          .replace(/[_-]+/g, ' ')
+          .replace(/\b\w/g, (char) => char.toUpperCase())
+          .trim()
+      : fact.label,
+    value: fact.value.trim(),
+  }))
+  .filter((fact): fact is { label: string; value: string } => Boolean(fact.label && fact.value));
+---
+
+<section data-testid="about-profile-facts" class="card">
+  {renderedFacts.length > 0 && (
+    <h2 class="section-heading">Profile</h2>
+  )}
+  <dl>
+    {renderedFacts.map((fact) => (
+      <div class="fact-row">
+        <dt>{fact.label}</dt>
+        <dd>{fact.value}</dd>
+      </div>
+    ))}
+  </dl>
+  {renderedFacts.length === 0 && (
+    <p class="empty">Profile details unavailable.</p>
+  )}
+</section>
+
+<style>
+  dl {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0;
+  }
+
+  .fact-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  dt {
+    font-weight: 500;
+    color: var(--text-muted, #486581);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--text-body, #243b53);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  .empty {
+    margin: 0;
+    color: var(--text-muted, #486581);
+    font-style: italic;
+  }
+
+  @media (max-width: 767px) {
+    section {
+      width: 100%;
+      max-width: 100%;
+    }
+  }
+</style>

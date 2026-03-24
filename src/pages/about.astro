@@ -1,0 +1,85 @@
+---
+import Layout from '../layouts/Layout.astro';
+import AvatarSection from '../components/about/AvatarSection.astro';
+import ContentSection from '../components/about/ContentSection.astro';
+import ProfileCard from '../components/about/ProfileCard.astro';
+import PublicationsSection from '../components/about/PublicationsSection.astro';
+import { loadAboutPage } from '../lib/content-loader';
+
+const { avatarImage, introductionHtml, profile, publications } = await loadAboutPage();
+
+const profileName = profile.facts.find(({ id }) => id === 'name')?.value;
+---
+
+<Layout
+  pageKey="about"
+  shell="about"
+  contentWidth="wide"
+>
+  <section class="about-page layout-content-container">
+    <div class="about-container">
+      <aside class="left-rail">
+        <AvatarSection avatarImage={avatarImage} />
+        <ProfileCard facts={profile.facts} />
+      </aside>
+
+      <div class="about-content">
+        <ContentSection introductionHtml={introductionHtml} />
+        <PublicationsSection publications={publications} highlightAuthor={profileName} />
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .about-page {
+    flex: 1;
+    padding: var(--space-section-y) var(--space-page-x);
+    position: relative;
+  }
+
+  .about-container {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  .about-page :global(.card) {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .left-rail {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-stack-md);
+    position: sticky;
+    min-width: 0;
+    /* Keep a visible gap so the sticky rail does not visually collide with the header. */
+    top: calc(var(--header-height) + var(--space-stack-sm));
+  }
+
+  .about-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-stack-md);
+    min-width: 0; /* Prevent overflow */
+  }
+
+  @media (max-width: 767px) {
+    .about-page {
+      padding: var(--space-stack-lg) 0;
+    }
+
+    .about-container {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .left-rail {
+      position: static;
+      align-items: stretch;
+    }
+  }
+</style>

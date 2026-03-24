@@ -1,0 +1,26 @@
+<footer>
+  <div class="footer-inner">
+    <p>Built with Astro.</p>
+  </div>
+</footer>
+
+<style>
+  footer {
+    margin-top: auto;
+    padding: 0 var(--space-page-x);
+    border-top: 1px solid var(--surface-border);
+    background: var(--surface-bg);
+    color: var(--text-muted);
+    backdrop-filter: blur(18px);
+  }
+
+  .footer-inner {
+    width: min(100%, var(--page-width-wide));
+    margin: 0 auto;
+    padding: 1rem 0 1.25rem;
+  }
+
+  p {
+    margin: 0;
+  }
+</style>

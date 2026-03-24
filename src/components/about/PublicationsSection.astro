@@ -1,0 +1,236 @@
+---
+// PublicationsSection.astro - Academic publications display
+// Shows list of publications with title, authors, date, and links
+
+import type { Publication } from '../../lib/content-types';
+
+interface Props {
+  publications: Publication[];
+  highlightAuthor?: string;
+}
+
+const { publications, highlightAuthor } = Astro.props as Props;
+---
+
+<section data-testid="about-publications" class="card">
+  <h2 class="section-heading">Publications</h2>
+  {publications.length === 0 ? (
+    <p class="empty">No publications yet.</p>
+  ) : (
+    <ul class="publication-list">
+      {publications.map((publication, publicationIndex) => (
+        <li class="publication-item">
+          <h3 class="publication-title">{publication.title}</h3>
+          <p class="publication-authors">
+            {publication.authors.map((author, i) => (
+              <span class:list={[{ 'highlight-author': highlightAuthor && author === highlightAuthor }]}>
+                {author}{i < publication.authors.length - 1 ? ', ' : ''}
+              </span>
+            ))}
+          </p>
+          <p class="publication-meta">
+            <span class="date">{publication.date}</span>
+            {publication.source && <span class="source">{publication.source}</span>}
+          </p>
+          <div class="publication-links">
+            {publication.abstract && (
+              <button
+                type="button"
+                class="publication-link-button publication-abstract-toggle"
+                data-abstract-toggle
+                data-target={`publication-abstract-${publicationIndex}`}
+                aria-expanded="false"
+              >
+                Abstract
+              </button>
+            )}
+            {publication.doi && (
+              <a
+                class="publication-link-button"
+                href={`https://doi.org/${publication.doi}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                DOI
+              </a>
+            )}
+            {publication.code && (
+              <a
+                class="publication-link-button"
+                href={publication.code}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Code
+              </a>
+            )}
+          </div>
+          {publication.abstract && (
+            <p id={`publication-abstract-${publicationIndex}`} class="publication-abstract" hidden>
+              {publication.abstract}
+            </p>
+          )}
+        </li>
+      ))}
+    </ul>
+  )}
+</section>
+
+<style>
+  section {
+    margin-top: 0;
+  }
+
+  .empty {
+    color: var(--text-muted);
+    font-style: italic;
+    margin: 0;
+  }
+
+  .publication-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .publication-item {
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--surface-border, rgba(203, 213, 225, 0.42));
+  }
+
+  .publication-item:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .publication-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-strong);
+    line-height: 1.4;
+  }
+
+  .publication-authors {
+    margin: 0 0 0.25rem 0;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .highlight-author {
+    font-weight: 600;
+    color: var(--text-body);
+  }
+
+  .publication-meta {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .source {
+    padding-left: 0.75rem;
+    border-left: 1px solid var(--surface-border);
+  }
+
+  .publication-links {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .publication-link-button {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--link-accent);
+    background: var(--link-accent-bg);
+    border-radius: 0.25rem;
+    border: 1px solid transparent;
+    text-decoration: none;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+      background var(--motion-duration-ui, 0.2s) var(--motion-ease-standard, ease),
+      transform var(--motion-duration-ui, 0.2s) var(--motion-ease-standard, ease),
+      box-shadow var(--motion-duration-ui, 0.2s) var(--motion-ease-standard, ease);
+  }
+
+  .publication-abstract-toggle {
+    color: #3a2711;
+    background: rgba(218, 165, 32, 0.2);
+    border-color: rgba(184, 134, 11, 0.34);
+  }
+
+  .publication-link-button:hover {
+    background: var(--link-accent-bg-hover);
+    transform: var(--motion-lift-sm, translateY(-2px));
+  }
+
+  .publication-abstract-toggle:hover {
+    background: rgba(218, 165, 32, 0.3);
+  }
+
+  .publication-link-button:focus-visible {
+    outline: none;
+    background: var(--link-accent-bg-hover);
+    box-shadow: var(--focus-ring, 0 0 0 2px rgba(43, 81, 182, 0.4));
+    transform: var(--motion-lift-sm, translateY(-2px));
+  }
+
+  .publication-abstract-toggle:focus-visible {
+    background: rgba(218, 165, 32, 0.3);
+    box-shadow: 0 0 0 2px rgba(184, 134, 11, 0.35);
+  }
+
+  .publication-abstract {
+    margin: 0.75rem 0 0;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+    text-align: justify;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--surface-border);
+  }
+
+  @media (max-width: 767px) {
+    .publication-title {
+      font-size: 0.9375rem;
+    }
+  }
+</style>
+
+<script is:inline>
+  const abstractToggles = document.querySelectorAll('[data-abstract-toggle]');
+
+  abstractToggles.forEach((toggle) => {
+    toggle.addEventListener('click', () => {
+      const targetId = toggle.getAttribute('data-target');
+      if (!targetId) {
+        return;
+      }
+
+      const panel = document.getElementById(targetId);
+      if (!panel) {
+        return;
+      }
+
+      const isCollapsed = panel.hasAttribute('hidden');
+      if (isCollapsed) {
+        panel.removeAttribute('hidden');
+        toggle.setAttribute('aria-expanded', 'true');
+        toggle.textContent = 'Hide abstract';
+      } else {
+        panel.setAttribute('hidden', '');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.textContent = 'Abstract';
+      }
+    });
+  });
+</script>

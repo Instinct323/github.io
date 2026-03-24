@@ -1,0 +1,374 @@
+---
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import 'swiper/css/effect-coverflow';
+import type { FeaturedSlide, HomepageConfig } from '../../lib/content-loader';
+
+// Contract: Render the full featured-media carousel region used on the home page,
+// including slide markup, controls, and client bootstrap hooks.
+
+interface Props {
+  slides: FeaturedSlide[];
+  settings: HomepageConfig['featuredCarousel'];
+}
+
+const { slides, settings } = Astro.props;
+const totalSlides = slides.length;
+const hasSlides = totalSlides > 0;
+const hasMultiSlides = totalSlides > 1;
+const showArrows = settings.showNavigationArrows && hasMultiSlides;
+const showIndicator = settings.showIndicator && hasMultiSlides;
+const showControls = showArrows || showIndicator;
+const counterPadLength = Math.max(1, settings.counterPadLength);
+const firstProgressWidth = totalSlides > 0 ? (100 / totalSlides) : 100;
+const visual = settings.visual;
+const slideWidthDesktop = visual.slideWidth.desktop;
+const slideWidthTablet = visual.slideWidth.tablet;
+const slideWidthMobile = visual.slideWidth.mobile;
+const inactiveOpacity = Math.min(1, Math.max(0, visual.inactiveOpacity));
+
+const prevIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>`;
+const nextIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
+
+---
+
+{hasSlides ? (
+  <div
+    class="swiper home-carousel"
+    data-testid="home-carousel"
+    data-counter-pad-length={counterPadLength}
+    data-space-between={visual.spaceBetween}
+    data-slide-width-desktop={slideWidthDesktop}
+    data-slide-width-tablet={slideWidthTablet}
+    data-slide-width-mobile={slideWidthMobile}
+    data-inactive-opacity={inactiveOpacity}
+    aria-label={settings.ariaLabel}
+    aria-roledescription="carousel"
+    style={`--carousel-slide-width-desktop: ${slideWidthDesktop}; --carousel-slide-width-tablet: ${slideWidthTablet}; --carousel-slide-width-mobile: ${slideWidthMobile}; --carousel-inactive-opacity: ${inactiveOpacity};`}
+  >
+    <div class="swiper-wrapper" data-testid="carousel-viewport">
+      {slides.map((slide, index) => (
+        <div
+          class="swiper-slide"
+          data-testid={`carousel-slide-${index}`}
+          aria-label={`Slide ${index + 1} of ${totalSlides}`}
+        >
+          <div class="slide-media-frame">
+            <img
+              src={slide.src}
+              srcset={slide.srcset}
+              sizes={slide.sizes}
+              alt={slide.alt}
+              width={slide.width}
+              height={slide.height}
+              loading={index === 0 ? 'eager' : 'lazy'}
+              decoding={index === 0 ? 'sync' : 'async'}
+              fetchpriority={index === 0 ? 'high' : 'auto'}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+
+    {showControls && (
+      <>
+        {showArrows && (
+          <>
+            {/* Floating Minimalist Arrows */}
+            <button
+              type="button"
+              class="nav-arrow nav-arrow--prev"
+              data-testid="carousel-prev"
+              aria-label={settings.prevButtonAriaLabel}
+            >
+              <Fragment set:html={prevIcon} />
+            </button>
+
+            <button
+              type="button"
+              class="nav-arrow nav-arrow--next"
+              data-testid="carousel-next"
+              aria-label={settings.nextButtonAriaLabel}
+            >
+              <Fragment set:html={nextIcon} />
+            </button>
+          </>
+        )}
+
+        {showIndicator && (
+          <div class="elegant-indicator">
+            <div class="indicator-counter">
+              <span class="count-current">{String(1).padStart(counterPadLength, '0')}</span>
+              <span class="count-separator"></span>
+              <span class="count-total">{totalSlides.toString().padStart(counterPadLength, '0')}</span>
+            </div>
+            <div class="indicator-progress">
+               <div class="indicator-progress-fill" style={`width: ${firstProgressWidth}%`} />
+            </div>
+          </div>
+        )}
+      </>
+    )}
+  </div>
+) : (
+  <div class="swiper-empty" data-testid="home-coverflow-empty">
+    <p>{settings.emptyText}</p>
+  </div>
+)}
+
+{hasMultiSlides && <script>
+  const carouselRoot = document.querySelector('.home-carousel');
+
+  if (carouselRoot instanceof HTMLElement) {
+    // Keep one shared import promise so pointer/focus/viewport triggers never double-init.
+    let initPromise: Promise<void> | null = null;
+
+    const initCarousel = () => {
+      if (!initPromise) {
+        initPromise = import('../../lib/carousel').then((mod) => {
+          mod.registerFeaturedMediaCarouselReducedMotion();
+          mod.initFeaturedMediaCarousels();
+        });
+      }
+
+      return initPromise;
+    };
+
+    // Intent-based eager load keeps controls responsive when users hover/focus before intersecting.
+    const eagerLoad = () => {
+      cleanup();
+      void initCarousel();
+    };
+
+    const cleanup = () => {
+      carouselRoot.removeEventListener('pointerenter', eagerLoad);
+      carouselRoot.removeEventListener('focusin', eagerLoad);
+    };
+
+    carouselRoot.addEventListener('pointerenter', eagerLoad, { once: true, passive: true });
+    carouselRoot.addEventListener('focusin', eagerLoad, { once: true });
+
+    // Viewport-based lazy init remains the primary path, with idle-time preference on capable browsers.
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) {
+          return;
+        }
+
+        observer.disconnect();
+
+        // Initialize immediately for faster response; idle-time preference removed.
+        void initCarousel();
+      }, { rootMargin: '100px 0px' });
+
+      observer.observe(carouselRoot);
+    } else {
+      void initCarousel();
+    }
+  }
+</script>}
+
+<style is:global>
+  /* Swiper base styles override - Refined presentation */
+  .home-carousel.swiper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+    padding: var(--space-section-sm) 0;
+    touch-action: pan-y;
+  }
+
+  .home-carousel .swiper-wrapper {
+    flex: 1;
+    min-height: 0;
+    align-items: center;
+    overflow: visible;
+  }
+
+  .home-carousel .swiper-slide {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: auto;
+    width: var(--carousel-slide-width-tablet);
+    transition: transform var(--motion-duration-lg) var(--motion-ease-smooth),
+                opacity var(--motion-duration-lg) var(--motion-ease-smooth);
+    opacity: var(--carousel-inactive-opacity);
+  }
+
+  .home-carousel .swiper-slide-active {
+    opacity: 1;
+  }
+
+  /* Refined card frame - cleaner depth */
+  .slide-media-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #0f172a;
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.25),
+      0 0 0 1px rgba(255, 255, 255, 0.06);
+    transition: all var(--motion-duration-lg) var(--motion-ease-smooth);
+  }
+
+  .slide-media-frame img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+    transition: transform var(--motion-duration-lg) var(--motion-ease-smooth);
+  }
+
+  .home-carousel .swiper-slide-active .slide-media-frame img {
+    transform: scale(1.03);
+  }
+
+  /* Refined arrows - minimal presence */
+  .nav-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.85);
+    cursor: pointer;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--motion-duration-ui) var(--motion-ease-smooth);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .nav-arrow:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-50%) scale(1.08);
+  }
+
+  .nav-arrow:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.5);
+  }
+
+  .nav-arrow--prev { left: 0.5rem; }
+  .nav-arrow--next { right: 0.5rem; }
+
+  /* Refined indicator - editorial counter style */
+  .elegant-indicator {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.625rem;
+    z-index: 100;
+    padding: 0.625rem 1.25rem;
+    background: rgba(15, 23, 42, 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 100px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .indicator-counter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    letter-spacing: 0.08em;
+  }
+
+  .count-current { color: #93c5fd; font-weight: 600; }
+  .count-separator {
+    width: 6px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.25);
+  }
+  .count-total { opacity: 0.5; }
+
+  .indicator-progress {
+    width: 72px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  .indicator-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #60a5fa, #93c5fd);
+    transition: width var(--motion-duration-lg) var(--motion-ease-smooth);
+  }
+
+  /* Desktop adjustments */
+  @media (min-width: 1025px) {
+    .home-carousel .swiper-slide {
+      width: var(--carousel-slide-width-desktop);
+    }
+    .nav-arrow--prev { left: 0; }
+    .nav-arrow--next { right: 0; }
+  }
+
+  /* Mobile styles */
+  @media (max-width: 767px) {
+    .home-carousel.swiper {
+      padding: var(--space-stack-md) 0;
+    }
+
+    .home-carousel .swiper-wrapper {
+      min-height: min(70vw, 340px);
+    }
+
+    .home-carousel .swiper-slide {
+      width: var(--carousel-slide-width-mobile);
+    }
+
+    .slide-media-frame {
+      border-radius: 16px;
+    }
+
+    .nav-arrow {
+      display: none;
+    }
+
+    .elegant-indicator {
+      padding: 0.5rem 1rem;
+    }
+
+    .indicator-progress {
+      width: 48px;
+    }
+  }
+
+  /* Empty state */
+  .swiper-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 280px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 20px;
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.35);
+  }
+</style>

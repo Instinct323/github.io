@@ -1,0 +1,101 @@
+---
+// ContentSection.astro - Markdown content rendering
+// Renders introduction markdown with proper styling
+
+interface Props {
+  introductionHtml: string;
+}
+
+const { introductionHtml } = Astro.props;
+---
+
+<article data-testid="about-markdown" class="card markdown-content" set:html={introductionHtml} />
+
+<style>
+  .markdown-content {
+    line-height: 1.7;
+    color: var(--text-body);
+  }
+
+  .markdown-content :global(h2) {
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--text-strong);
+    border-bottom: 1px solid var(--surface-border);
+    padding-bottom: 0.5rem;
+  }
+
+  .markdown-content :global(h2:first-child) {
+    margin-top: 0;
+  }
+
+  .markdown-content :global(p) {
+    margin: 0 0 1rem 0;
+  }
+
+  .markdown-content :global(a) {
+    color: var(--link-accent);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease;
+  }
+
+  .markdown-content :global(a:hover) {
+    border-bottom-color: var(--link-accent);
+  }
+
+  .markdown-content :global(strong) {
+    font-weight: 600;
+    color: var(--text-strong);
+  }
+
+  .markdown-content :global(ul) {
+    margin: 0.5rem 0 1rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .markdown-content :global(li) {
+    margin-bottom: 0.5rem;
+  }
+
+  .markdown-content :global(code) {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.9em;
+  }
+
+  /* Badge images (shields.io) */
+  .markdown-content :global(img) {
+    display: inline-block;
+    vertical-align: middle;
+    height: 20px;
+    margin-right: 0.25rem;
+  }
+
+  .markdown-content :global(p:first-child) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 767px) {
+    .markdown-content {
+      font-size: 1.03rem;
+      line-height: 1.8;
+    }
+
+    .markdown-content :global(h2) {
+      font-size: 1rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.625rem;
+    }
+
+    .markdown-content :global(p) {
+      margin-bottom: 0.875rem;
+    }
+  }
+</style>

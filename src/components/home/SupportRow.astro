@@ -1,0 +1,46 @@
+---
+// SupportRow.astro - Lower support row for concise metadata or directional text
+interface Props {
+  text: string;
+}
+
+const { text } = Astro.props;
+// Normalize once so condition and render content stay in sync.
+const supportText = text?.trim() ?? '';
+---
+
+{supportText && (
+  <div data-testid="home-support-row" class="support-row">
+    <p class="support-text">{supportText}</p>
+  </div>
+)}
+
+<style>
+  .support-row {
+    padding: var(--space-stack-md) var(--space-page-x);
+    text-align: center;
+  }
+
+  .support-text {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.5);
+    max-width: 32rem;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+  }
+
+  /* Mobile: Compact spacing */
+  @media (max-width: 767px) {
+    .support-row {
+      padding: var(--space-stack-sm) var(--space-page-x);
+    }
+
+    .support-text {
+      font-size: 0.75rem;
+    }
+  }
+</style>

@@ -1,0 +1,84 @@
+---
+import { loadPrimaryNavModel } from '../lib/site-navigation';
+
+const currentRoutePath = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const primaryNavigation = await loadPrimaryNavModel();
+---
+
+<header class="is-sticky" data-testid="primary-header" data-sticky="true">
+  <nav class="header-nav" aria-label={primaryNavigation.ariaLabel}>
+    {primaryNavigation.items.map(({ href, label, navTestId }) => {
+      const isActive = currentRoutePath === href;
+
+      return (
+        <a
+          href={href === '/' ? href : `${href}/`}
+          class:list={{ 'is-active': isActive }}
+          aria-current={isActive ? 'page' : undefined}
+          data-testid={navTestId}
+          data-active={isActive ? 'true' : 'false'}
+        >
+          {label}
+        </a>
+      );
+    })}
+  </nav>
+</header>
+
+<style>
+  header {
+    min-height: var(--header-height);
+    box-sizing: border-box;
+    padding: 0 var(--space-page-x);
+    background: var(--header-surface-bg);
+    backdrop-filter: blur(18px);
+    box-shadow: inset 0 -1px 0 var(--header-surface-border);
+  }
+
+  header.is-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+  }
+
+  .header-nav {
+    width: min(100%, var(--page-width-wide));
+    min-height: var(--header-height);
+    margin: 0 auto;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  a {
+    position: relative;
+    padding: 0.5rem 0.875rem;
+    color: var(--nav-link-color);
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 6px;
+    transition:
+      background var(--motion-duration-ui, 0.2s) var(--motion-ease-standard, ease),
+      transform var(--motion-duration-ui, 0.2s) var(--motion-ease-standard, ease),
+      box-shadow var(--motion-duration-ui, 0.2s) var(--motion-ease-standard, ease),
+      color var(--motion-duration-ui, 0.2s) var(--motion-ease-standard, ease);
+  }
+
+  a:hover {
+    background: var(--nav-link-hover-bg);
+    transform: var(--motion-lift-sm, translateY(-2px));
+  }
+
+  a:focus-visible {
+    outline: none;
+    background: var(--nav-link-hover-bg);
+    box-shadow: var(--focus-ring, 0 0 0 2px rgba(43, 81, 182, 0.4));
+    transform: var(--motion-lift-sm, translateY(-2px));
+  }
+
+  a.is-active {
+    color: var(--nav-link-active-color);
+    background: var(--nav-link-active-bg);
+    box-shadow: var(--nav-link-active-shadow);
+  }
+</style>

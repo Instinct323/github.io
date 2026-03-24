@@ -1,0 +1,175 @@
+---
+import { getImage } from 'astro:assets';
+import backgroundDesktopSource from '../../content/background/desktop.jpg';
+import backgroundMobileSource from '../../content/background/mobile.jpg';
+import LayoutHead from '../components/layout/LayoutHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import { loadEffectsConfig, loadMediaConfig, loadSiteMetadata } from '../lib/config-loader';
+import { buildShellStyle, type LayoutProps } from '../lib/layout-shell';
+import {
+  IMAGE_HIGH_WIDTHS_KEY,
+  RESPONSIVE_VIEWPORT_WIDTHS,
+  assertMediaConfigShape,
+  selectCandidateWidthsByPolicy,
+} from '../lib/media-loader-core';
+import '../styles/layout-shell.css';
+import '../styles/tokens.css';
+
+
+const siteMetadata = await loadSiteMetadata();
+const siteUrl = Astro.site ?? new URL(siteMetadata.siteUrl);
+const mediaConfig = await loadMediaConfig();
+const effectsConfig = await loadEffectsConfig();
+assertMediaConfigShape(mediaConfig);
+
+const {
+  pageKey,
+  title,
+  description,
+  type = 'website',
+  noindex = false,
+  shell = 'default',
+  overlayVariant,
+  contentWidth = 'standard',
+} = Astro.props as LayoutProps;
+
+const MOBILE_VIEWPORT_HEIGHT = 812;
+const DESKTOP_VIEWPORT_HEIGHT = 900;
+const BACKGROUND_QUALITY = mediaConfig.image.quality;
+const BACKGROUND_WIDTHS = mediaConfig.image.widths.high;
+const BACKGROUND_MEDIUM_SCALE = mediaConfig.image.dprScale.medium;
+
+const BACKGROUND_MOBILE_ASPECT_RATIO = backgroundMobileSource.width / backgroundMobileSource.height;
+const BACKGROUND_DESKTOP_ASPECT_RATIO = backgroundDesktopSource.width / backgroundDesktopSource.height;
+
+function selectBackgroundWidth(
+  inferredWidth: number,
+  dprScale: number,
+  keySuffix: string,
+  sourceMaxWidth: number,
+): number {
+  return selectCandidateWidthsByPolicy({
+    candidateWidths: BACKGROUND_WIDTHS,
+    inferredWidths: [inferredWidth],
+    dprScale,
+    key: `${IMAGE_HIGH_WIDTHS_KEY}.${keySuffix}`,
+    maxSelectableWidth: sourceMaxWidth,
+  })[0];
+}
+
+function inferCoverWidth(
+  viewportWidth: number,
+  viewportHeight: number,
+  imageAspectRatio: number,
+): number {
+  const viewportAspectRatio = viewportWidth / viewportHeight;
+  const cropExpansion = Math.max(1, imageAspectRatio / viewportAspectRatio);
+  return Math.ceil(viewportWidth * cropExpansion);
+}
+
+const mobileInferredWidth = inferCoverWidth(
+  RESPONSIVE_VIEWPORT_WIDTHS.mobile,
+  MOBILE_VIEWPORT_HEIGHT,
+  BACKGROUND_MOBILE_ASPECT_RATIO,
+);
+const desktopInferredWidth = inferCoverWidth(
+  RESPONSIVE_VIEWPORT_WIDTHS.desktop,
+  DESKTOP_VIEWPORT_HEIGHT,
+  BACKGROUND_DESKTOP_ASPECT_RATIO,
+);
+
+const mobileWidth = selectBackgroundWidth(
+  mobileInferredWidth,
+  BACKGROUND_MEDIUM_SCALE,
+  'mobile.medium',
+  backgroundMobileSource.width,
+);
+const desktopWidth = selectBackgroundWidth(
+  desktopInferredWidth,
+  BACKGROUND_MEDIUM_SCALE,
+  'desktop.medium',
+  backgroundDesktopSource.width,
+);
+
+const [backgroundMobile, backgroundDesktop] = await Promise.all([
+  getImage({
+    src: backgroundMobileSource,
+    width: mobileWidth,
+    height: Math.ceil(mobileWidth / BACKGROUND_MOBILE_ASPECT_RATIO),
+    fit: 'cover',
+    position: 'center',
+    format: 'webp',
+    quality: BACKGROUND_QUALITY,
+  }),
+  getImage({
+    src: backgroundDesktopSource,
+    width: desktopWidth,
+    height: Math.ceil(desktopWidth / BACKGROUND_DESKTOP_ASPECT_RATIO),
+    fit: 'cover',
+    position: 'center',
+    format: 'webp',
+    quality: BACKGROUND_QUALITY,
+  }),
+]);
+
+const backgroundMobileImage = `url('${backgroundMobile.src}')`;
+const backgroundDesktopImage = `url('${backgroundDesktop.src}')`;
+
+const pageMetadata = pageKey ? siteMetadata.pages[pageKey] : undefined;
+const resolvedTitle = title ?? pageMetadata?.title ?? siteMetadata.defaultTitle;
+const resolvedDescription = description ?? pageMetadata?.description ?? siteMetadata.defaultDescription;
+
+const canonicalUrl = new URL(Astro.url.pathname, siteUrl).toString();
+const sitemapUrl = new URL('/sitemap-index.xml', siteUrl).toString();
+const shellStyle = buildShellStyle(shell, overlayVariant, contentWidth, backgroundMobileImage, backgroundDesktopImage);
+const starfieldConfig = effectsConfig.starfield;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <LayoutHead
+      generator={Astro.generator}
+      title={resolvedTitle}
+      description={resolvedDescription}
+      canonicalUrl={canonicalUrl}
+      sitemapUrl={sitemapUrl}
+      type={type}
+      noindex={noindex}
+    />
+  </head>
+  <body data-shell={shell} style={shellStyle}>
+    <div class="site-frame" aria-hidden="true">
+      <canvas class="site-stars-background"></canvas>
+      <canvas
+        class="site-stars"
+        data-testid="site-stars"
+        data-starfield={JSON.stringify(starfieldConfig)}
+      ></canvas>
+    </div>
+    <main class="site-shell" data-shell={shell} data-testid="site-shell">
+      <Header />
+      <slot />
+      <Footer />
+    </main>
+    <script>
+      import { initStarfield } from '../lib/starfield-runtime';
+
+      const backgroundCanvas = document.querySelector<HTMLCanvasElement>('.site-stars-background');
+      const starsCanvas = document.querySelector<HTMLCanvasElement>('.site-stars');
+      if (backgroundCanvas && starsCanvas) {
+        try {
+          const serializedConfig = starsCanvas.dataset.starfield;
+          if (!serializedConfig) {
+            throw new Error('Missing data-starfield payload');
+          }
+          const config = JSON.parse(serializedConfig);
+          initStarfield(backgroundCanvas, starsCanvas, config);
+        } catch (e) {
+          console.error('Failed to initialize starfield:', e);
+        }
+      }
+    </script>
+  </body>
+</html>

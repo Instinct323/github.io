@@ -1,0 +1,55 @@
+---
+// AvatarSection.astro - Left rail avatar display
+// Image strategy: keep native <img> for the avatar rail to preserve strict eager-loading priority and fixed intrinsic sizing.
+// Responsive variant generation is centralized in media-loader-core for cross-surface consistency.
+
+import type { ContentImage } from '../../lib/content-loader';
+import { buildImageVariantSet } from '../../lib/media-loader-core';
+
+interface Props {
+  avatarImage: ContentImage;
+}
+
+const { avatarImage } = Astro.props;
+const { alt, responsive } = avatarImage;
+const variantSet = await buildImageVariantSet(avatarImage);
+---
+
+<div data-testid="about-avatar">
+  <img
+    class="avatar-image"
+    src={variantSet.src}
+    srcset={variantSet.srcset}
+    sizes={responsive.sizes}
+    alt={alt}
+    width={variantSet.width}
+    height={variantSet.height}
+    loading="eager"
+    fetchpriority="high"
+  />
+</div>
+
+<style>
+  div {
+    display: flex;
+    justify-content: center;
+  }
+
+  .avatar-image {
+    width: 100%;
+    max-width: 220px;
+    height: auto;
+    border-radius: var(--radius-sm, 0.5rem);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    object-fit: cover;
+    aspect-ratio: 3 / 4;
+  }
+
+  @media (max-width: 767px) {
+    .avatar-image {
+      max-width: 180px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+    }
+  }
+</style>

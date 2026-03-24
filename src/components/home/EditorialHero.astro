@@ -1,0 +1,148 @@
+---
+import type { Home, HomepageConfig, ResolvedProfileData } from '../../lib/content-loader';
+
+// Contract: Render the identity-focused hero copy block on the home page,
+// combining profile metadata with home-specific editorial text.
+
+interface Props {
+  profile: ResolvedProfileData;
+  home: Home;
+  settings: HomepageConfig['editorialHero'];
+}
+
+const { profile, home, settings } = Astro.props;
+
+const profileName = profile.name.trim();
+const heroEyebrow = home.eyebrow?.trim() ?? '';
+const showDeckDivider = settings.showDeckDivider;
+
+// Keep deck field normalization in one place so template rendering stays linear.
+const deckFieldValues = {
+  location: profile.location.trim(),
+  organization: profile.organization.trim(),
+} as const;
+
+const deckItems = settings.deckFields.flatMap((field) => {
+  const value = deckFieldValues[field];
+  if (!value) {
+    return [];
+  }
+
+  return [{
+    className: field === 'organization' ? 'org' : 'location',
+    value,
+  }];
+});
+---
+
+<section data-testid="home-editorial-hero" class="editorial-hero">
+  <div class="hero-content">
+    {heroEyebrow && (
+      <p class="site-eyebrow hero-eyebrow-accent eyebrow-accent">{heroEyebrow}</p>
+    )}
+    <h1 class="site-hero-title hero-title-accent title-accent">{profileName}</h1>
+    <p class="deck">
+      {deckItems.map((item, index) => [
+        // Render separators from index to avoid branching inside data setup.
+        index > 0 && showDeckDivider ? <span class="deck-divider"></span> : null,
+        <span class:list={[item.className]}>{item.value}</span>,
+      ])}
+    </p>
+    <div class="hero-actions">
+      <slot />
+    </div>
+  </div>
+</section>
+
+<style>
+  .editorial-hero {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    z-index: 10;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: var(--measure-content, 65ch);
+    text-align: center;
+    color: #ffffff;
+    padding: clamp(0.5rem, 1.5vw, 1rem) var(--space-page-x);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .title-accent {
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  .deck {
+    margin: 0 0 var(--space-stack-sm);
+    font-size: 1.0625rem;
+    font-weight: 400;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.75);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+  }
+
+  .deck .location,
+  .deck .org {
+    font-weight: 500;
+  }
+
+  .deck-divider {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: rgba(147, 197, 253, 0.6);
+  }
+
+  .hero-actions {
+    margin-top: var(--space-stack-sm);
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  /* Mobile: Simplified elegance */
+  @media (max-width: 767px) {
+    .editorial-hero {
+      padding: var(--space-stack-md) 0 var(--space-stack-sm);
+    }
+
+    .hero-content {
+      text-align: center;
+      max-width: 100%;
+      padding: var(--space-section-sm) var(--space-stack-lg);
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border: none;
+      box-shadow: none;
+      margin: 0 auto;
+    }
+
+    .title-accent {
+      margin-bottom: var(--space-stack-sm);
+      font-size: clamp(2.2rem, 12vw, 2.8rem);
+      line-height: 1.06;
+    }
+
+    .deck {
+      justify-content: center;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .hero-actions {
+      margin-top: 0;
+    }
+  }
+</style>

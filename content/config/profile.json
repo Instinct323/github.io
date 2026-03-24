@@ -1,0 +1,19 @@
+{
+  "facts": [
+    {
+      "id": "name",
+      "label": "Name",
+      "value": "Zanjia Tong"
+    },
+    {
+      "id": "organization",
+      "label": "Organization",
+      "value": "SUSTech"
+    },
+    {
+      "id": "location",
+      "label": "Location",
+      "value": "Chaozhou, China"
+    }
+  ]
+}

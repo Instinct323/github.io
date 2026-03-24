@@ -1,0 +1,213 @@
+---
+import Layout from '../layouts/Layout.astro';
+import EditorialHero from '../components/home/EditorialHero.astro';
+import SupportRow from '../components/home/SupportRow.astro';
+import FeaturedMediaCarousel from '../components/home/FeaturedMediaCarousel.astro';
+import { loadFeaturedSlides, loadHomePage } from '../lib/content-loader';
+
+const [{ profile, home, site }, featuredSlides] = await Promise.all([
+  loadHomePage(),
+  loadFeaturedSlides(),
+]);
+
+const hasSlides = featuredSlides.length > 0;
+const homepageConfig = site.home;
+const layoutCfg = homepageConfig.layout;
+const supportText = homepageConfig.support.text?.trim() ?? '';
+const sections = layoutCfg.sectionOrder;
+---
+
+<Layout
+  pageKey="home"
+  shell={layoutCfg.shell}
+  contentWidth={layoutCfg.contentWidth}
+>
+  <section class="home-page">
+    <div class="background-decor">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+    </div>
+    
+      <div class:list={[
+        'editorial-layout',
+        'layout-content-container',
+        `editorial-layout--gap-${layoutCfg.editorialGapVariant}`,
+        { 'editorial-layout--solo': !hasSlides },
+      ]}>
+      {sections.map((section) => {
+        if (section === 'hero') {
+          return (
+            <div class="hero-section">
+              <EditorialHero profile={profile} home={home} settings={homepageConfig.editorialHero} />
+            </div>
+          );
+        }
+
+        if (section === 'carousel' && hasSlides) {
+          return (
+            <div class="carousel-section">
+              <FeaturedMediaCarousel
+                slides={featuredSlides}
+                settings={homepageConfig.featuredMedia.carousel}
+              />
+            </div>
+          );
+        }
+
+        return null;
+      })}
+    </div>
+
+    {supportText && <div class="support-section"><SupportRow text={supportText} /></div>}
+  </section>
+</Layout>
+
+<style>
+  .home-page {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Refined gradient mesh - subtle, non-animated atmosphere */
+  .background-decor {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0;
+    animation: fadeIn 1.5s ease-out forwards;
+  }
+
+  .blob-1 {
+    top: -20%;
+    right: -15%;
+    width: 55vw;
+    height: 55vw;
+    background: radial-gradient(ellipse at center, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
+    animation-delay: 0.2s;
+  }
+
+  .blob-2 {
+    bottom: -25%;
+    left: -20%;
+    width: 65vw;
+    height: 65vw;
+    background: radial-gradient(ellipse at center, rgba(30, 64, 175, 0.08) 0%, transparent 70%);
+    animation-delay: 0.4s;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Grid-based layout with intentional whitespace */
+  .editorial-layout {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    align-items: center;
+    min-height: 100vh;
+    padding: var(--header-height, 4.25rem) var(--space-page-x) var(--space-section-lg);
+    gap: var(--space-stack-md);
+  }
+
+  .editorial-layout--gap-roomy {
+    gap: var(--space-section-sm);
+  }
+
+  .editorial-layout--gap-tight {
+    gap: var(--space-stack-sm);
+  }
+
+  .hero-section {
+    grid-row: 1;
+    display: flex;
+    justify-content: center;
+    padding-top: var(--space-stack-sm);
+    z-index: 10;
+  }
+
+  .carousel-section {
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .support-section {
+    position: relative;
+    z-index: 1;
+    grid-row: 3;
+    padding-bottom: var(--space-section-md);
+  }
+
+  /* Desktop: Refined proportions */
+  @media (min-width: 1025px) {
+    .editorial-layout {
+      padding-top: var(--header-height, 4.25rem);
+    }
+
+    .editorial-layout--gap-tight {
+      gap: var(--space-stack-md);
+    }
+
+    .editorial-layout--gap-roomy {
+      gap: var(--space-section-sm);
+    }
+  }
+
+  /* Tablet: Fluid transitions */
+  @media (max-width: 1024px) {
+    .editorial-layout {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding-top: var(--header-height, 4.25rem);
+      gap: var(--space-section-md);
+    }
+
+    .editorial-layout--gap-tight {
+      gap: var(--space-section-sm);
+    }
+
+    .hero-section, .carousel-section {
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+      flex: none;
+    }
+  }
+
+  /* Mobile: Compact rhythm */
+  @media (max-width: 767px) {
+    .editorial-layout {
+      padding: calc(var(--header-height) + var(--space-section-sm)) var(--space-page-x) var(--space-section-md);
+      gap: var(--space-stack-md);
+    }
+
+    .editorial-layout--gap-tight {
+      gap: var(--space-stack-sm);
+    }
+
+    .editorial-layout--gap-roomy {
+      gap: var(--space-stack-md);
+    }
+  }
+</style>

@@ -1,0 +1,154 @@
+{
+  // Owned by content maintainers; consumed by src/lib/config-loader.ts via jsonc-parser.
+  // Owned by SEO/content editors; consumed by metadata loaders and route-level head builders.
+  "metadata": {
+    "siteUrl": "https://instinct323.github.io/",
+    "defaultTitle": "instinct323.github.io",
+    "defaultDescription": "Personal website built with Astro.",
+    "pages": {
+      "home": {
+        "title": "Zanjia Tong | instinct323.github.io",
+        "description": "Personal website of Zanjia Tong featuring research, background, and photography collections."
+      },
+      "about": {
+        "title": "About | instinct323.github.io",
+        "description": "Academic background, publications, and profile of Zanjia Tong, M.Sc. student at SUSTech."
+      },
+      "photography": {
+        "title": "Photography | instinct323.github.io",
+        "description": "Photography portfolio by Zanjia Tong with travel, personal, and curated collection galleries."
+      }
+    }
+  },
+  // Owned by IA/accessibility editors; consumed by header nav and home CTA link rendering.
+  "navigation": {
+    "labels": {
+      "home": "Home",
+      "about": "About",
+      "photography": "Photography"
+    },
+    "ariaLabels": {
+      "primary": "Primary",
+      "homeLinks": "Page navigation"
+    }
+  },
+  // Owned by homepage editors; consumed by src/lib/content-loader.ts and home components.
+  "home": {
+    // Owned by homepage copywriters; consumed by the home hero text model.
+    "hero": {
+      "eyebrow": "Life is short, use Python"
+    },
+    // Owned by design/system editors; consumed by Layout and homepage section orchestration.
+    "layout": {
+      "shell": "home",
+      "contentWidth": "wide",
+      "sectionOrder": [
+        "hero",
+        "carousel"
+      ],
+      "editorialGapVariant": "tight"
+    },
+    // Owned by profile content editors; consumed by the editorial hero deck renderer.
+    "editorialHero": {
+      "deckFields": [
+        "location",
+        "organization"
+      ],
+      "showDeckDivider": true
+    },
+    // Owned by nav/content editors; consumed by homepage CTA ordering and emphasis logic.
+    "pageLinks": {
+      "order": [
+        "about",
+        "photography"
+      ],
+      "primaryKey": "about"
+    },
+    // Owned by media editors; consumed by homepage featured media loaders and carousel UI.
+    "featuredMedia": {
+      "items": [
+        "0-travel/0-Northeast/1.jpg",
+        "0-travel/2-Hong Kong/1.jpg",
+        "0-travel/4-Guangzhou/4.jpg",
+        "1-me/1.jpg",
+        "1-me/0.jpg",
+        "2-collection/1.jpg",
+        "2-collection/7.jpg"
+      ],
+      // Owned by interaction/accessibility maintainers; consumed by carousel controls and labels.
+      "carousel": {
+        "ariaLabel": "Homepage featured image carousel",
+        "prevButtonAriaLabel": "Previous slide",
+        "nextButtonAriaLabel": "Next slide",
+        "emptyText": "No featured images available",
+        "showNavigationArrows": false,
+        "showIndicator": false,
+        "counterPadLength": 2,
+        "visual": {
+          "spaceBetween": 0,
+          "slideWidth": {
+            "desktop": "40%",
+            "tablet": "60%",
+            "mobile": "80%"
+          },
+          "inactiveOpacity": 1.0
+        }
+      }
+    },
+    // Owned by editorial team; consumed by bottom support row when helper copy is present.
+    "support": {
+      "text": ""
+    }
+  },
+  // Owned by media pipeline maintainers; consumed as default derivative settings outside homepage featured media.
+  "image": {
+    "format": "webp",
+    "quality": 95,
+    "widths": {
+      "medium": [500, 750, 1000],
+      "high": [960, 1440, 1920, 2560]
+    },
+    "dprScale": {
+      "medium": 1,
+      "high": 3
+    }
+  },
+  // Owned by photography page editors; consumed by photography route hero content.
+  "photography": {
+    "hero": {
+      "eyebrow": "VIVO!",
+      "title": "Photography",
+      "description": "Maybe you’re also obsessed with the sky."
+    },
+    // Owned by gallery layout maintainers; consumed by photography gallery grid calculations.
+    "grid": {
+      "columns": {
+        "desktop": 3,
+        "mobile": 2
+      },
+      "gap": "1rem"
+    }
+  },
+  // Owned by visual system maintainers; consumed by Layout background effects.
+  "effects": {
+    "starfield": {
+      "enabled": true,
+      "starDensity": "high",
+      "starSize": { "min": 1.0, "max": 5.0 },
+      "speedFactor": 0.5,
+      "maxDistance": 60,
+      "linkOpacity": 0.5,
+      "starOpacity": 1.0,
+      "starColor": "#ffffff",
+      "starShapes": ["circle", "star"],
+      "parallaxEffect": true,
+      "parallaxStrength": 1,
+      "mouseRadius": 200,
+      "rotationSpeed": { "min": 0.001, "max": 0.003 },
+      "connectionsWhenNoMouse": false,
+      "percentStarsConnecting": 30,
+      "lineThickness": 2,
+      "canvasGradient": null
+    }
+  }
+}

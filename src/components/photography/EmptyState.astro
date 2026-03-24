@@ -1,0 +1,30 @@
+---
+// EmptyState.astro - Empty gallery placeholder
+// Displays a friendly message when a category has no images
+
+interface Props {
+  category: string;
+}
+
+const { category } = Astro.props;
+---
+
+<div data-testid="gallery-empty" class="empty-state">
+  <p class="empty-message">No photos in {category} yet.</p>
+</div>
+
+<style>
+  .empty-state {
+    padding: 3rem 1.5rem;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 0.25rem;
+    border: 1px dashed var(--surface-border);
+  }
+
+  .empty-message {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+  }
+</style>

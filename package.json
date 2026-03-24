@@ -1,0 +1,42 @@
+{
+  "name": "instinct323.github.io",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev --host",
+    "check": "pnpm typecheck && pnpm lint && pnpm build",
+    "build": "astro build",
+    "preview": "astro preview --host",
+    "typecheck": "astro check",
+    "lint": "node tests/verify-no-media-json-refs.js && eslint . --ext .js,.ts,.astro",
+    "test:site": "node tests/assert-site-output.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@astrojs/react": "^5.0.0",
+    "@astrojs/sitemap": "^3.6.0",
+    "astro": "^6.0.5",
+    "jsonc-parser": "^3.3.1",
+    "markdown-it": "^14.1.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "sharp": "^0.34.5",
+    "swiper": "^12.1.2",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@typescript-eslint/parser": "^8.57.1",
+    "eslint": "^10.0.3",
+    "eslint-plugin-astro": "^1.6.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "globals": "^17.4.0",
+    "playwright": "^1.58.2",
+    "vitest": "^4.1.0"
+  }
+}

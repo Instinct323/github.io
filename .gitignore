@@ -1,0 +1,12 @@
+# Local orchestration notes and verification artifacts
+.sisyphus/
+.DS_Store
+desktop.ini
+.idea/
+.vscode/
+
+# Astro/Node build artifacts
+node_modules/
+.astro/
+dist/
+.opencode/

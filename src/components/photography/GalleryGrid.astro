@@ -1,0 +1,50 @@
+---
+// GalleryGrid.astro - Responsive grid layout for gallery images
+// Desktop: 3 columns, Mobile: 2 columns
+
+import GalleryImage from './GalleryImage.astro';
+import EmptyState from './EmptyState.astro';
+import type { GridColumns, MediaImage } from '../../lib/content-loader';
+
+interface Props {
+  images: MediaImage[];
+  emptyLabel: string;
+  columns: GridColumns;
+  gap: string;
+  eagerCount: number;
+}
+
+const {
+  images,
+  emptyLabel,
+  columns,
+  gap,
+  eagerCount,
+} = Astro.props;
+
+const hasImages = images.length > 0;
+---
+
+<div data-testid="gallery-grid" class="gallery-grid" style={`--columns-desktop: ${columns.desktop}; --columns-mobile: ${columns.mobile}; --gap: ${gap}`}>
+  {hasImages ? (
+    images.map((image, index) => (
+      <GalleryImage image={image} eager={index < eagerCount} />
+    ))
+  ) : (
+    <EmptyState category={emptyLabel} />
+  )}
+</div>
+
+<style>
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--columns-desktop), minmax(0, 1fr));
+    gap: var(--gap);
+  }
+
+  @media (max-width: 767px) {
+    .gallery-grid {
+      grid-template-columns: repeat(var(--columns-mobile), minmax(0, 1fr));
+    }
+  }
+</style>
