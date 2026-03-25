@@ -5,7 +5,7 @@
   "date": "2023-01",
   "source": "arXiv",
   "links": {
-    "code": "https://github.com/Instinct323/wiou",
-    "DOI": "10.48550/arXiv.2301.10051"
+    "Code": "https://github.com/Instinct323/wiou",
+    "DOI": "https://doi.org/10.48550/arXiv.2301.10051"
   }
 }
