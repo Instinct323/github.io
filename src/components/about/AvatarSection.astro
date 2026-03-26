@@ -1,32 +1,44 @@
 ---
 // AvatarSection.astro - Left rail avatar display
-// Image strategy: keep native <img> for the avatar rail to preserve strict eager-loading priority and fixed intrinsic sizing.
+// Image strategy: reuse shared deferred image placeholder/mount flow for cross-page consistency.
 // Responsive variant generation is centralized in media-loader-core for cross-surface consistency.
 
+import DeferredImage from '../common/DeferredImage.astro';
 import type { ContentImage } from '../../lib/content-loader';
 import { buildImageVariantSet } from '../../lib/media-loader-core';
+import { resolveControlImageLoading } from '../../lib/page-load-orchestrator';
 
 interface Props {
   avatarImage: ContentImage;
+  placeholderEffectName: string;
 }
 
-const { avatarImage } = Astro.props;
+const { avatarImage, placeholderEffectName } = Astro.props;
 const { alt, responsive } = avatarImage;
 const variantSet = await buildImageVariantSet(avatarImage);
+const criticalImageLoading = resolveControlImageLoading('critical');
 ---
 
 <div data-testid="about-avatar">
-  <img
-    class="avatar-image"
-    src={variantSet.src}
-    srcset={variantSet.srcset}
-    sizes={responsive.sizes}
-    alt={alt}
-    width={variantSet.width}
-    height={variantSet.height}
-    loading="eager"
-    fetchpriority="high"
-  />
+  <div class="avatar-frame image-deferred-frame">
+    <DeferredImage
+      group="about-avatar-image"
+      placeholderEffectName={placeholderEffectName}
+    >
+      <img
+        class="avatar-image"
+        src={variantSet.src}
+        srcset={variantSet.srcset}
+        sizes={responsive.sizes}
+        alt={alt}
+        width={variantSet.width}
+        height={variantSet.height}
+        loading={criticalImageLoading.loading}
+        decoding={criticalImageLoading.decoding}
+        fetchpriority={criticalImageLoading.fetchPriority}
+      />
+    </DeferredImage>
+  </div>
 </div>
 
 <style>
@@ -35,18 +47,24 @@ const variantSet = await buildImageVariantSet(avatarImage);
     justify-content: center;
   }
 
-  .avatar-image {
+  .avatar-frame {
     width: 100%;
     max-width: 220px;
-    height: auto;
+    aspect-ratio: 3 / 4;
     border-radius: var(--radius-sm, 0.5rem);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+
+  .avatar-image {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
-    aspect-ratio: 3 / 4;
+    border-radius: inherit;
   }
 
   @media (max-width: 767px) {
-    .avatar-image {
+    .avatar-frame {
       max-width: 180px;
       aspect-ratio: 1;
       border-radius: 50%;

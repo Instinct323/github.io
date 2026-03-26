@@ -2,6 +2,7 @@ import introductionRaw from '../../content/config/introduction.md?raw';
 import profile from '../../content/config/profile.json';
 import siteConfigRaw from '../../content/config/site.jsonc?raw';
 import { parse } from 'jsonc-parser';
+import { assertBoolean, assertFiniteNumber, assertString } from './assertions';
 
 import type {
   HomePageCarouselVisualConfig,
@@ -25,30 +26,6 @@ const IMAGE_LOADING_EFFECT_NAME_SET = new Set<string>(IMAGE_LOADING_EFFECT_NAMES
 
 function isImageLoadingEffectName(value: string): value is ImageLoadingEffectName {
   return IMAGE_LOADING_EFFECT_NAME_SET.has(value);
-}
-
-function assertFiniteNumber(value: unknown, key: string): number {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    throw new Error(`Missing or invalid ${key} (must be a number)`);
-  }
-
-  return value;
-}
-
-function assertBoolean(value: unknown, key: string): boolean {
-  if (typeof value !== 'boolean') {
-    throw new Error(`Missing or invalid ${key} (must be a boolean)`);
-  }
-
-  return value;
-}
-
-function assertString(value: unknown, key: string): string {
-  if (typeof value !== 'string' || !value.trim()) {
-    throw new Error(`Missing or invalid ${key} (must be a non-empty string)`);
-  }
-
-  return value.trim();
 }
 
 function resolveFeaturedCarouselVisual(visual: unknown): HomePageCarouselVisualConfig {

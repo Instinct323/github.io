@@ -43,9 +43,20 @@ Do not use `git` commands in this repository.
 - Runtime path: simplify critical render and loading paths; avoid unnecessary work in page-level code.
 - Documentation and comments: update docs when behavior changes; add useful English comments in non-obvious blocks (roughly every 6-10 lines in dense logic, not on obvious lines).
 
+### Loading orchestration
+
+- Use `src/lib/page-load-orchestrator.ts` as the single entry for page-load priority (`frame -> background -> controls`).
+- Build deferred-mount runtime payload/bootstrap options via `src/lib/deferred-mount-page.ts` to avoid page-level inline wiring duplication.
+
+### Shared validation helpers
+
+- Reuse `src/lib/assertions.ts` for cross-module primitive assertions (`assertString`, `assertFiniteNumber`, `assertBoolean`, `assertPositiveInteger`).
+- Keep module-local assertions only when they are domain-specific and not safely generalizable.
+
 ### Test hygiene gate (must pass)
 
 - Keep `tests/` minimal and stable.
+- Keep only repository-generic guardrail tests; remove plan-private or one-off refactor checks once the plan is done.
 - Do not keep temporary diagnostics scripts in the repository.
 - Remove throwaway test helpers after the related verification is complete.
 

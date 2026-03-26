@@ -1,4 +1,5 @@
 import { loadMediaConfig } from './config-loader';
+import { assertPositiveInteger } from './assertions';
 import type {
   ContentImage,
   ContentImageOptions,
@@ -120,14 +121,6 @@ function buildMediumSurfaceOptions(
     }),
     sizes: profile.sizes,
   };
-}
-
-function assertPositiveInteger(value: unknown, key: string): number {
-  if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
-    throw new Error(`Invalid ${key}: ${String(value)}`);
-  }
-
-  return value;
 }
 
 function buildGallerySizes(grid: MediaConfig['grid']): string {

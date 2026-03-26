@@ -13,15 +13,9 @@ import {
   assertMediaConfigShape,
   selectCandidateWidthsByPolicy,
 } from '../lib/media-loader-core';
+import { orchestratePageLoad } from '../lib/page-load-orchestrator';
 import '../styles/layout-shell.css';
 import '../styles/tokens.css';
-
-
-const siteMetadata = await loadSiteMetadata();
-const siteUrl = Astro.site ?? new URL(siteMetadata.siteUrl);
-const mediaConfig = await loadMediaConfig();
-const effectsConfig = await loadEffectsConfig();
-assertMediaConfigShape(mediaConfig);
 
 const {
   pageKey,
@@ -36,21 +30,18 @@ const {
 
 const MOBILE_VIEWPORT_HEIGHT = 812;
 const DESKTOP_VIEWPORT_HEIGHT = 900;
-const BACKGROUND_QUALITY = mediaConfig.image.quality;
-const BACKGROUND_WIDTHS = mediaConfig.image.widths.high;
-const BACKGROUND_MEDIUM_SCALE = mediaConfig.image.dprScale.medium;
-
 const BACKGROUND_MOBILE_ASPECT_RATIO = backgroundMobileSource.width / backgroundMobileSource.height;
 const BACKGROUND_DESKTOP_ASPECT_RATIO = backgroundDesktopSource.width / backgroundDesktopSource.height;
 
 function selectBackgroundWidth(
+  candidateWidths: number[],
   inferredWidth: number,
   dprScale: number,
   keySuffix: string,
   sourceMaxWidth: number,
 ): number {
   return selectCandidateWidthsByPolicy({
-    candidateWidths: BACKGROUND_WIDTHS,
+    candidateWidths,
     inferredWidths: [inferredWidth],
     dprScale,
     key: `${IMAGE_HIGH_WIDTHS_KEY}.${keySuffix}`,
@@ -79,39 +70,87 @@ const desktopInferredWidth = inferCoverWidth(
   BACKGROUND_DESKTOP_ASPECT_RATIO,
 );
 
-const mobileWidth = selectBackgroundWidth(
-  mobileInferredWidth,
-  BACKGROUND_MEDIUM_SCALE,
-  'mobile.medium',
-  backgroundMobileSource.width,
-);
-const desktopWidth = selectBackgroundWidth(
-  desktopInferredWidth,
-  BACKGROUND_MEDIUM_SCALE,
-  'desktop.medium',
-  backgroundDesktopSource.width,
-);
+type LayoutFrameData = {
+  siteMetadata: Awaited<ReturnType<typeof loadSiteMetadata>>;
+  mediaConfig: Awaited<ReturnType<typeof loadMediaConfig>>;
+  effectsConfig: Awaited<ReturnType<typeof loadEffectsConfig>>;
+};
 
-const [backgroundMobile, backgroundDesktop] = await Promise.all([
-  getImage({
-    src: backgroundMobileSource,
-    width: mobileWidth,
-    height: Math.ceil(mobileWidth / BACKGROUND_MOBILE_ASPECT_RATIO),
-    fit: 'cover',
-    position: 'center',
-    format: 'webp',
-    quality: BACKGROUND_QUALITY,
-  }),
-  getImage({
-    src: backgroundDesktopSource,
-    width: desktopWidth,
-    height: Math.ceil(desktopWidth / BACKGROUND_DESKTOP_ASPECT_RATIO),
-    fit: 'cover',
-    position: 'center',
-    format: 'webp',
-    quality: BACKGROUND_QUALITY,
-  }),
-]);
+type LayoutBackgroundData = {
+  backgroundMobile: Awaited<ReturnType<typeof getImage>>;
+  backgroundDesktop: Awaited<ReturnType<typeof getImage>>;
+};
+
+const layoutLoad = await orchestratePageLoad<LayoutFrameData, LayoutBackgroundData>({
+  frame: async () => {
+    const [siteMetadata, mediaConfig, effectsConfig] = await Promise.all([
+      loadSiteMetadata(),
+      loadMediaConfig(),
+      loadEffectsConfig(),
+    ]);
+
+    assertMediaConfigShape(mediaConfig);
+
+    return {
+      siteMetadata,
+      mediaConfig,
+      effectsConfig,
+    };
+  },
+  background: async ({ frame }) => {
+    const backgroundQuality = frame.mediaConfig.image.quality;
+    const backgroundWidths = frame.mediaConfig.image.widths.high;
+    const backgroundMediumScale = frame.mediaConfig.image.dprScale.medium;
+
+    const mobileWidth = selectBackgroundWidth(
+      backgroundWidths,
+      mobileInferredWidth,
+      backgroundMediumScale,
+      'mobile.medium',
+      backgroundMobileSource.width,
+    );
+    const desktopWidth = selectBackgroundWidth(
+      backgroundWidths,
+      desktopInferredWidth,
+      backgroundMediumScale,
+      'desktop.medium',
+      backgroundDesktopSource.width,
+    );
+
+    const [backgroundMobile, backgroundDesktop] = await Promise.all([
+      getImage({
+        src: backgroundMobileSource,
+        width: mobileWidth,
+        height: Math.ceil(mobileWidth / BACKGROUND_MOBILE_ASPECT_RATIO),
+        fit: 'cover',
+        position: 'center',
+        format: 'webp',
+        quality: backgroundQuality,
+      }),
+      getImage({
+        src: backgroundDesktopSource,
+        width: desktopWidth,
+        height: Math.ceil(desktopWidth / BACKGROUND_DESKTOP_ASPECT_RATIO),
+        fit: 'cover',
+        position: 'center',
+        format: 'webp',
+        quality: backgroundQuality,
+      }),
+    ]);
+
+    return {
+      backgroundMobile,
+      backgroundDesktop,
+    };
+  },
+});
+
+const {
+  siteMetadata,
+  effectsConfig,
+} = layoutLoad.frame;
+const { backgroundMobile, backgroundDesktop } = layoutLoad.background;
+const siteUrl = Astro.site ?? new URL(siteMetadata.siteUrl);
 
 const backgroundMobileImage = `url('${backgroundMobile.src}')`;
 const backgroundDesktopImage = `url('${backgroundDesktop.src}')`;

@@ -3,10 +3,10 @@
 // Image strategy: keep astro:assets <Image> for gallery cards to use build-time transforms and responsive variants.
 
 import { Image } from 'astro:assets';
-import DeferredMount from '../common/DeferredMount.astro';
-import ImageLoadingEffect from '../common/ImageLoadingEffect.astro';
+import DeferredImage from '../common/DeferredImage.astro';
 
 import type { MediaImage } from '../../lib/content-loader';
+import { resolveControlImageLoading } from '../../lib/page-load-orchestrator';
 
 interface Props {
   image: MediaImage;
@@ -18,18 +18,19 @@ const {
   placeholderEffectName,
 } = Astro.props;
 const aspectRatio = `${image.width} / ${image.height}`;
+const deferredImageLoading = resolveControlImageLoading('deferred');
 ---
 
 <article data-testid="gallery-image" class="image-card">
   <div
-    class="image-wrapper"
+    class="image-wrapper image-deferred-frame"
     style={`--aspect-ratio: ${aspectRatio};`}
     data-aspect-ratio={aspectRatio}
   >
-    <DeferredMount group="gallery-image">
-      <div slot="placeholder" class="image-lazy-placeholder" aria-hidden="true">
-        <ImageLoadingEffect effectName={placeholderEffectName} />
-      </div>
+    <DeferredImage
+      group="gallery-image"
+      placeholderEffectName={placeholderEffectName}
+    >
       <Image
         src={image.src}
         alt={image.alt}
@@ -39,10 +40,11 @@ const aspectRatio = `${image.width} / ${image.height}`;
         sizes={image.responsive.sizes}
         format={image.responsive.format}
         quality={image.responsive.quality}
-        loading="lazy"
-        decoding="async"
+        loading={deferredImageLoading.loading}
+        decoding={deferredImageLoading.decoding}
+        fetchpriority={deferredImageLoading.fetchPriority}
       />
-    </DeferredMount>
+    </DeferredImage>
   </div>
   {image.caption && <p class="caption">{image.caption}</p>}
 </article>
@@ -67,28 +69,6 @@ const aspectRatio = `${image.width} / ${image.height}`;
     aspect-ratio: var(--aspect-ratio);
     overflow: hidden;
     position: relative;
-    background: var(--image-load-placeholder-bg);
-  }
-
-  .image-wrapper :global(.deferred-mount) {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
-
-  .image-wrapper :global([data-deferred-host]) {
-    width: 100%;
-    height: 100%;
-  }
-
-  .image-wrapper :global(.image-lazy-placeholder) {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    background: var(--image-load-placeholder-bg);
   }
 
   @media (prefers-reduced-motion: reduce) {

@@ -13,7 +13,7 @@
     "build": "astro build",
     "preview": "astro preview --host",
     "typecheck": "astro check",
-    "lint": "node tests/verify-no-media-json-refs.js && eslint . --ext .js,.ts,.astro",
+    "lint": "node tests/verify-no-media-json-refs.js && node tests/verify-no-unused-tokens.js && eslint . --ext .js,.ts,.astro",
     "test:site": "node tests/assert-site-output.js",
     "test": "vitest run"
   },

@@ -9,7 +9,7 @@ interface RawPublication {
   links?: unknown;
 }
 
-function ensureNonEmptyString(value: unknown, key: string, filePath: string): string {
+function assertNonEmptyString(value: unknown, key: string, filePath: string): string {
   if (typeof value !== 'string' || !value.trim()) {
     throw new Error(`Invalid publication field "${key}" in ${filePath}`);
   }
@@ -17,7 +17,7 @@ function ensureNonEmptyString(value: unknown, key: string, filePath: string): st
   return value.trim();
 }
 
-function ensureAuthors(value: unknown, filePath: string): string[] {
+function assertAuthors(value: unknown, filePath: string): string[] {
   if (!Array.isArray(value) || value.length === 0) {
     throw new Error(`Invalid publication field "authors" in ${filePath}`);
   }
@@ -68,13 +68,13 @@ export function normalizePublication(rawValue: unknown, filePath: string): Publi
   }
 
   const raw = rawValue as RawPublication;
-  const title = ensureNonEmptyString(raw.title, 'title', filePath);
-  const date = ensureNonEmptyString(raw.date, 'date', filePath);
+  const title = assertNonEmptyString(raw.title, 'title', filePath);
+  const date = assertNonEmptyString(raw.date, 'date', filePath);
 
   return {
     title,
     date,
-    authors: ensureAuthors(raw.authors, filePath),
+    authors: assertAuthors(raw.authors, filePath),
     abstract: typeof raw.abstract === 'string' && raw.abstract.trim() ? raw.abstract.trim() : undefined,
     source: typeof raw.source === 'string' && raw.source.trim() ? raw.source.trim() : undefined,
     links: normalizePublicationLinks(raw),

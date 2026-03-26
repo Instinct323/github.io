@@ -19,8 +19,6 @@
 
   /* Typography scale */
   --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
   --font-display-lg: clamp(2rem, 5vw, 4rem);
   --measure-subhead: 44ch;
 
@@ -77,7 +75,6 @@
 
   /* Surfaces */
   --surface-bg: rgba(255, 255, 255, 0.76);
-  --card-surface-bg: rgba(255, 255, 255, 0.88);
   --surface-border: rgba(148, 163, 184, 0.34);
   --page-canvas: #edf2f7;
   --page-overlay: var(--overlay-soft);
@@ -105,6 +102,7 @@
   --header-surface-bg: rgba(15, 23, 42, 0.62);
   --header-surface-border: rgba(148, 163, 184, 0.24);
 
+  /* Image loading primitives (shared by home carousel and photography gallery) */
   --image-load-effect-size: 40px;
   --image-load-effect-size-lg: 48px;
   --image-load-bars-width: 24px;
@@ -113,7 +111,9 @@
   --image-load-bars-height-lg: 34px;
   --image-load-static-dot-size: 10px;
   --image-load-static-dot-color: rgba(51, 51, 51, 0.5);
-  --image-load-placeholder-bg: rgba(29, 38, 48, 0);
+  --image-load-placeholder-bg: rgba(255, 255, 255, 0.22);
+  --image-load-placeholder-border: rgba(255, 255, 255, 0.36);
+  --image-load-placeholder-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   --image-load-card-bg: rgba(255, 255, 255, 0.65);
   --image-load-card-radius: 0.375rem;
   --image-load-card-border: rgba(203, 213, 225, 0.2);
@@ -122,10 +122,40 @@
   --image-load-caption-bg: rgba(248, 250, 252, 0.4);
   --image-load-caption-font-size: 0.8125rem;
   --image-load-caption-padding: 0.625rem 0.875rem;
+
+  --image-load-empty-bg: rgba(255, 255, 255, 0.02);
+  --image-load-empty-border: rgba(255, 255, 255, 0.08);
+  --image-load-empty-text: rgba(255, 255, 255, 0.35);
 }
 
 @media (max-width: 768px) {
   :root {
     font-size: 14px;
   }
+}
+
+/* Shared deferred image placeholder containers */
+.image-deferred-frame .deferred-mount {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.image-deferred-frame [data-deferred-host] {
+  width: 100%;
+  height: 100%;
+}
+
+.image-deferred-frame .image-lazy-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: var(--image-load-placeholder-bg);
+  border: 1px solid var(--image-load-placeholder-border);
+  box-shadow: var(--image-load-placeholder-shadow);
+  backdrop-filter: blur(14px) saturate(130%);
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
 }

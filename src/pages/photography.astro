@@ -3,20 +3,35 @@ import Layout from '../layouts/Layout.astro';
 import GallerySection from '../components/photography/GallerySection.astro';
 import { loadMediaTree, loadPhotography } from '../lib/content-loader';
 import { loadMediaConfig } from '../lib/config-loader';
+import { buildDeferredMountRuntimePayload } from '../lib/deferred-mount-page';
+import { orchestratePageLoad } from '../lib/page-load-orchestrator';
 
-const [mediaTree, photographyConfig, mediaConfig] = await Promise.all([
-  loadMediaTree(),
-  loadPhotography(),
-  loadMediaConfig(),
-]);
+const photographyLoad = await orchestratePageLoad({
+  frame: async () => {
+    const [mediaTree, photographyConfig, mediaConfig] = await Promise.all([
+      loadMediaTree(),
+      loadPhotography(),
+      loadMediaConfig(),
+    ]);
+
+    return {
+      mediaTree,
+      photographyConfig,
+      mediaConfig,
+    };
+  },
+});
+
+const {
+  mediaTree,
+  photographyConfig,
+  mediaConfig,
+} = photographyLoad.frame;
 
 const { categories } = mediaTree;
 const { hero: heroConfig, grid } = photographyConfig;
 const imageConfig = mediaConfig.image;
-const lazyLoadRuntimeConfig = {
-  rootMargin: imageConfig.lazyLoad.rootMargin,
-  mountDelayMs: import.meta.env.DEV ? imageConfig.lazyLoad.localDebugDelayMs : 0,
-};
+const galleryLazyRuntimePayload = buildDeferredMountRuntimePayload(imageConfig.lazyLoad, import.meta.env.DEV);
 const eyebrowText = heroConfig.eyebrow?.trim() ?? '';
 const descriptionText = heroConfig.description?.trim() ?? '';
 const totalImageCount = categories.reduce((imageCount, category) => {
@@ -64,7 +79,7 @@ const totalImageCount = categories.reduce((imageCount, category) => {
 
     <div
       class="gallery-container layout-content-container"
-      data-gallery-lazy-config={JSON.stringify(lazyLoadRuntimeConfig)}
+      data-gallery-lazy-config={galleryLazyRuntimePayload}
     >
       {categories.map(({ id, images, albums, testId, title }) => (
         <GallerySection
@@ -84,13 +99,16 @@ const totalImageCount = categories.reduce((imageCount, category) => {
 
 <script>
   import { bootstrapDeferredMounts } from '../lib/deferred-mount-bootstrap';
+  import { buildDeferredMountBootstrapOptions } from '../lib/deferred-mount-page';
 
   try {
-    bootstrapDeferredMounts({
-      containerSelector: '.gallery-container[data-gallery-lazy-config]',
-      configDataKey: 'galleryLazyConfig',
-      mountGroup: 'gallery-image',
-    });
+    bootstrapDeferredMounts(
+      buildDeferredMountBootstrapOptions(
+        '.gallery-container[data-gallery-lazy-config]',
+        'galleryLazyConfig',
+        'gallery-image',
+      ),
+    );
   } catch (e) {
     console.error('Failed to initialize gallery deferred loading:', e);
   }

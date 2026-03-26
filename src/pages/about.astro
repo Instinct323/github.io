@@ -4,9 +4,30 @@ import AvatarSection from '../components/about/AvatarSection.astro';
 import ContentSection from '../components/about/ContentSection.astro';
 import ProfileCard from '../components/about/ProfileCard.astro';
 import PublicationsSection from '../components/about/PublicationsSection.astro';
-import { loadAboutPage } from '../lib/content-loader';
+import { loadAboutAvatarImage, loadAboutPageFrame } from '../lib/content-loader';
+import { loadMediaConfig } from '../lib/config-loader';
+import { buildDeferredMountRuntimePayload } from '../lib/deferred-mount-page';
+import { orchestratePageLoad } from '../lib/page-load-orchestrator';
 
-const { avatarImage, introductionHtml, profile, publications } = await loadAboutPage();
+const aboutLoad = await orchestratePageLoad({
+  frame: async () => {
+    const [aboutFrame, mediaConfig] = await Promise.all([
+      loadAboutPageFrame(),
+      loadMediaConfig(),
+    ]);
+
+    return {
+      ...aboutFrame,
+      mediaConfig,
+    };
+  },
+  controls: ({ frame }) => loadAboutAvatarImage(frame.profile),
+});
+
+const { introductionHtml, profile, publications, mediaConfig } = aboutLoad.frame;
+const avatarImage = aboutLoad.controls;
+const avatarPlaceholderEffectName = mediaConfig.image.placeholderEffect;
+const avatarLazyRuntimePayload = buildDeferredMountRuntimePayload(mediaConfig.image.lazyLoad, import.meta.env.DEV);
 
 const profileName = profile.facts.find(({ id }) => id === 'name')?.value;
 ---
@@ -16,10 +37,16 @@ const profileName = profile.facts.find(({ id }) => id === 'name')?.value;
   shell="about"
   contentWidth="wide"
 >
-  <section class="about-page layout-content-container">
+  <section
+    class="about-page layout-content-container"
+    data-about-avatar-lazy-config={avatarLazyRuntimePayload}
+  >
     <div class="about-container">
       <aside class="left-rail">
-        <AvatarSection avatarImage={avatarImage} />
+        <AvatarSection
+          avatarImage={avatarImage}
+          placeholderEffectName={avatarPlaceholderEffectName}
+        />
         <ProfileCard facts={profile.facts} />
       </aside>
 
@@ -30,6 +57,23 @@ const profileName = profile.facts.find(({ id }) => id === 'name')?.value;
     </div>
   </section>
 </Layout>
+
+<script>
+  import { bootstrapDeferredMounts } from '../lib/deferred-mount-bootstrap';
+  import { buildDeferredMountBootstrapOptions } from '../lib/deferred-mount-page';
+
+  try {
+    bootstrapDeferredMounts(
+      buildDeferredMountBootstrapOptions(
+        '.about-page[data-about-avatar-lazy-config]',
+        'aboutAvatarLazyConfig',
+        'about-avatar-image',
+      ),
+    );
+  } catch (e) {
+    console.error('Failed to initialize about avatar deferred loading:', e);
+  }
+</script>
 
 <style>
   .about-page {

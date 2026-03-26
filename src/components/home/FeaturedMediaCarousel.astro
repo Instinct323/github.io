@@ -3,7 +3,9 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-coverflow';
+import DeferredImage from '../common/DeferredImage.astro';
 import type { FeaturedSlide, HomepageConfig } from '../../lib/content-loader';
+import { resolveControlImageLoading } from '../../lib/page-load-orchestrator';
 
 // Contract: Render the full featured-media carousel region used on the home page,
 // including slide markup, controls, and client bootstrap hooks.
@@ -11,9 +13,11 @@ import type { FeaturedSlide, HomepageConfig } from '../../lib/content-loader';
 interface Props {
   slides: FeaturedSlide[];
   settings: HomepageConfig['featuredCarousel'];
+  placeholderEffectName: string;
+  lazyLoadRuntimePayload: string;
 }
 
-const { slides, settings } = Astro.props;
+const { slides, settings, placeholderEffectName, lazyLoadRuntimePayload } = Astro.props;
 const totalSlides = slides.length;
 const hasSlides = totalSlides > 0;
 const hasMultiSlides = totalSlides > 1;
@@ -27,6 +31,7 @@ const slideWidthDesktop = visual.slideWidth.desktop;
 const slideWidthTablet = visual.slideWidth.tablet;
 const slideWidthMobile = visual.slideWidth.mobile;
 const inactiveOpacity = Math.min(1, Math.max(0, visual.inactiveOpacity));
+const deferredImageLoading = resolveControlImageLoading('deferred');
 
 const prevIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>`;
 const nextIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
@@ -45,6 +50,7 @@ const nextIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
     data-inactive-opacity={inactiveOpacity}
     aria-label={settings.ariaLabel}
     aria-roledescription="carousel"
+    data-carousel-lazy-config={lazyLoadRuntimePayload}
     style={`--carousel-slide-width-desktop: ${slideWidthDesktop}; --carousel-slide-width-tablet: ${slideWidthTablet}; --carousel-slide-width-mobile: ${slideWidthMobile}; --carousel-inactive-opacity: ${inactiveOpacity};`}
   >
     <div class="swiper-wrapper" data-testid="carousel-viewport">
@@ -54,18 +60,23 @@ const nextIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
           data-testid={`carousel-slide-${index}`}
           aria-label={`Slide ${index + 1} of ${totalSlides}`}
         >
-          <div class="slide-media-frame">
-            <img
-              src={slide.src}
-              srcset={slide.srcset}
-              sizes={slide.sizes}
-              alt={slide.alt}
-              width={slide.width}
-              height={slide.height}
-              loading={index === 0 ? 'eager' : 'lazy'}
-              decoding={index === 0 ? 'sync' : 'async'}
-              fetchpriority={index === 0 ? 'high' : 'auto'}
-            />
+          <div class="slide-media-frame image-deferred-frame">
+            <DeferredImage
+              group="home-carousel-image"
+              placeholderEffectName={placeholderEffectName}
+            >
+              <img
+                src={slide.src}
+                srcset={slide.srcset}
+                sizes={slide.sizes}
+                alt={slide.alt}
+                width={slide.width}
+                height={slide.height}
+                loading={deferredImageLoading.loading}
+                decoding={deferredImageLoading.decoding}
+                fetchpriority={deferredImageLoading.fetchPriority}
+              />
+            </DeferredImage>
           </div>
         </div>
       ))}
@@ -117,16 +128,42 @@ const nextIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
   </div>
 )}
 
+{hasSlides && <script>
+  import { bootstrapDeferredMounts } from '../../lib/deferred-mount-bootstrap';
+  import { buildDeferredMountBootstrapOptions } from '../../lib/deferred-mount-page';
+
+  try {
+    bootstrapDeferredMounts(
+      buildDeferredMountBootstrapOptions(
+        '.home-carousel[data-carousel-lazy-config]',
+        'carouselLazyConfig',
+        'home-carousel-image',
+      ),
+    );
+  } catch (e) {
+    console.error('Failed to initialize home carousel deferred loading:', e);
+  }
+</script>}
+
 {hasMultiSlides && <script>
   const carouselRoot = document.querySelector('.home-carousel');
 
   if (carouselRoot instanceof HTMLElement) {
     // Keep one shared import promise so pointer/focus/viewport triggers never double-init.
     let initPromise: Promise<void> | null = null;
+    let carouselModulePromise: Promise<typeof import('../../lib/carousel')> | null = null;
+
+    const prewarmCarouselModule = () => {
+      if (!carouselModulePromise) {
+        carouselModulePromise = import('../../lib/carousel');
+      }
+
+      return carouselModulePromise;
+    };
 
     const initCarousel = () => {
       if (!initPromise) {
-        initPromise = import('../../lib/carousel').then((mod) => {
+        initPromise = prewarmCarouselModule().then((mod) => {
           mod.registerFeaturedMediaCarouselReducedMotion();
           mod.initFeaturedMediaCarousels();
         });
@@ -134,6 +171,24 @@ const nextIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
 
       return initPromise;
     };
+
+    // Prewarm carousel module during idle time or early user intent.
+    try {
+      window.requestIdleCallback(() => {
+        void prewarmCarouselModule();
+      }, { timeout: 1200 });
+    } catch {
+      window.setTimeout(() => {
+        void prewarmCarouselModule();
+      }, 250);
+    }
+
+    const prewarmOnIntent = () => {
+      void prewarmCarouselModule();
+    };
+
+    carouselRoot.addEventListener('pointermove', prewarmOnIntent, { once: true, passive: true });
+    carouselRoot.addEventListener('touchstart', prewarmOnIntent, { once: true, passive: true });
 
     // Intent-based eager load keeps controls responsive when users hover/focus before intersecting.
     const eagerLoad = () => {
@@ -211,7 +266,7 @@ const nextIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
     aspect-ratio: 16 / 10;
     border-radius: 20px;
     overflow: hidden;
-    background: #0f172a;
+    background: var(--image-load-placeholder-bg);
     box-shadow:
       0 12px 40px rgba(0, 0, 0, 0.25),
       0 0 0 1px rgba(255, 255, 255, 0.06);
@@ -366,9 +421,9 @@ const nextIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
     justify-content: center;
     width: 100%;
     height: 280px;
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--image-load-empty-bg);
     border-radius: 20px;
-    border: 1px dashed rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.35);
+    border: 1px dashed var(--image-load-empty-border);
+    color: var(--image-load-empty-text);
   }
 </style>

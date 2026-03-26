@@ -8,6 +8,7 @@ import {
 import { compareNatural, stripNumericPrefix } from './content-normalize';
 import type {
   AboutPageData,
+  ContentImage,
   HomePageData,
   ProfileData,
   ResolvedProfileData,
@@ -112,11 +113,32 @@ function resolveAvatarAltFromProfile(profileData: ProfileData): string {
 }
 
 export async function loadAboutPage(): Promise<AboutPageData> {
+  const frame = await loadAboutPageFrame();
+  const avatarImage = await loadAboutAvatarImage(frame.profile);
+
+  return {
+    profile: frame.profile,
+    introductionHtml: frame.introductionHtml,
+    publications: frame.publications,
+    avatarImage,
+  };
+}
+
+export async function loadAboutPageFrame(): Promise<Omit<AboutPageData, 'avatarImage'>> {
   const [profileData, introduction, publications] = await Promise.all([
     loadProfile(),
     loadIntroduction(),
     loadPublications(),
   ]);
+
+  return {
+    profile: profileData,
+    introductionHtml: renderMarkdown(introduction),
+    publications,
+  };
+}
+
+export async function loadAboutAvatarImage(profileData: ProfileData): Promise<ContentImage> {
   const aboutImageOptions = await deriveContentImageOptions('about', {
     alt: resolveAvatarAltFromProfile(profileData),
   });
@@ -126,12 +148,7 @@ export async function loadAboutPage(): Promise<AboutPageData> {
     throw new Error('Missing about avatar image: content/config/avatar.jpg');
   }
 
-  return {
-    profile: profileData,
-    introductionHtml: renderMarkdown(introduction),
-    publications,
-    avatarImage,
-  };
+  return avatarImage;
 }
 
 export async function loadPublications(): Promise<Publication[]> {

@@ -4,11 +4,18 @@ import EditorialHero from '../components/home/EditorialHero.astro';
 import SupportRow from '../components/home/SupportRow.astro';
 import FeaturedMediaCarousel from '../components/home/FeaturedMediaCarousel.astro';
 import { loadFeaturedSlides, loadHomePage } from '../lib/content-loader';
+import { buildDeferredMountRuntimePayload } from '../lib/deferred-mount-page';
+import { orchestratePageLoad } from '../lib/page-load-orchestrator';
 
-const [{ profile, home, site }, featuredSlides] = await Promise.all([
-  loadHomePage(),
-  loadFeaturedSlides(),
-]);
+const homeLoad = await orchestratePageLoad({
+  frame: () => loadHomePage(),
+  controls: () => loadFeaturedSlides(),
+});
+
+const { profile, home, site } = homeLoad.frame;
+const featuredSlides = homeLoad.controls;
+const lazyLoadRuntimePayload = buildDeferredMountRuntimePayload(site.image.lazyLoad, import.meta.env.DEV);
+const placeholderEffectName = site.image.placeholderEffect;
 
 const hasSlides = featuredSlides.length > 0;
 const homepageConfig = site.home;
@@ -49,6 +56,8 @@ const sections = layoutCfg.sectionOrder;
               <FeaturedMediaCarousel
                 slides={featuredSlides}
                 settings={homepageConfig.featuredMedia.carousel}
+                placeholderEffectName={placeholderEffectName}
+                lazyLoadRuntimePayload={lazyLoadRuntimePayload}
               />
             </div>
           );

@@ -1,7 +1,8 @@
 import { buildDeferredMountGroupSelector } from './deferred-mount-contract';
 import { initDeferredMounts } from './deferred-mount-runtime';
+import { assertString } from './assertions';
 
-interface DeferredMountBootstrapOptions {
+export interface DeferredMountBootstrapOptions {
   containerSelector: string;
   configDataKey: string;
   mountGroup: string;
@@ -12,16 +13,9 @@ interface DeferredMountBootstrapConfig {
   mountDelayMs: number;
 }
 
-function assertBootstrapString(value: unknown, field: string): string {
-  if (typeof value !== 'string' || value.trim().length === 0) {
-    throw new Error(`Invalid deferred mount bootstrap ${field}.`);
-  }
-  return value;
-}
-
 function parseBootstrapConfig(serializedConfig: string): DeferredMountBootstrapConfig {
   const rawConfig = JSON.parse(serializedConfig);
-  const rootMargin = assertBootstrapString(rawConfig?.rootMargin, 'rootMargin');
+  const rootMargin = assertString(rawConfig?.rootMargin, 'deferred mount bootstrap rootMargin');
 
   if (typeof rawConfig?.mountDelayMs !== 'number' || rawConfig.mountDelayMs < 0) {
     throw new Error('Invalid deferred mount bootstrap mountDelayMs.');
@@ -34,9 +28,9 @@ function parseBootstrapConfig(serializedConfig: string): DeferredMountBootstrapC
 }
 
 export function bootstrapDeferredMounts(options: DeferredMountBootstrapOptions): void {
-  const containerSelector = assertBootstrapString(options.containerSelector, 'containerSelector');
-  const configDataKey = assertBootstrapString(options.configDataKey, 'configDataKey');
-  const mountGroup = assertBootstrapString(options.mountGroup, 'mountGroup');
+  const containerSelector = assertString(options.containerSelector, 'deferred mount bootstrap containerSelector');
+  const configDataKey = assertString(options.configDataKey, 'deferred mount bootstrap configDataKey');
+  const mountGroup = assertString(options.mountGroup, 'deferred mount bootstrap mountGroup');
 
   const container = document.querySelector(containerSelector);
   if (!(container instanceof HTMLElement)) {

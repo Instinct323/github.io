@@ -1,0 +1,38 @@
+---
+import DeferredMount from './DeferredMount.astro';
+import ImageLoadingEffect from './ImageLoadingEffect.astro';
+
+interface Props {
+  group: string;
+  placeholderEffectName: string;
+  announcePlaceholder?: boolean;
+}
+
+const {
+  group,
+  placeholderEffectName,
+  announcePlaceholder = false,
+} = Astro.props;
+
+if (typeof group !== 'string' || !group.trim()) {
+  throw new Error('DeferredImage expects a non-empty group.');
+}
+
+if (typeof placeholderEffectName !== 'string' || !placeholderEffectName.trim()) {
+  throw new Error('DeferredImage expects a non-empty placeholderEffectName.');
+}
+
+if (typeof announcePlaceholder !== 'boolean') {
+  throw new Error('DeferredImage expects announcePlaceholder to be a boolean when provided.');
+}
+---
+
+<DeferredMount
+  group={group.trim()}
+  announcePlaceholder={announcePlaceholder}
+>
+  <div slot="placeholder" class="image-lazy-placeholder" aria-hidden="true">
+    <ImageLoadingEffect effectName={placeholderEffectName.trim()} />
+  </div>
+  <slot />
+</DeferredMount>
