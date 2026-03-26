@@ -1,4 +1,4 @@
-export const PAGE_LOAD_PRIORITY = ['frame', 'background', 'controls'] as const;
+export const PAGE_LOAD_PRIORITY = ['frame', 'controls', 'background'] as const;
 
 export type PageLoadStage = (typeof PAGE_LOAD_PRIORITY)[number];
 
@@ -12,7 +12,7 @@ export interface PageLoadContext<TFrame, TBackground> {
 export interface PageLoadPlan<TFrame, TBackground, TControls> {
   frame: () => MaybePromise<TFrame>;
   background?: (_ctx: Pick<PageLoadContext<TFrame, TBackground>, 'frame'>) => MaybePromise<TBackground>;
-  controls?: (_ctx: PageLoadContext<TFrame, TBackground>) => MaybePromise<TControls>;
+  controls?: (_ctx: Pick<PageLoadContext<TFrame, TBackground>, 'frame'>) => MaybePromise<TControls>;
 }
 
 export interface PageLoadResult<TFrame, TBackground, TControls> {
@@ -69,10 +69,8 @@ export async function orchestratePageLoad<TFrame, TBackground = null, TControls 
   plan: PageLoadPlan<TFrame, TBackground, TControls>,
 ): Promise<PageLoadResult<TFrame, TBackground, TControls>> {
   const frame = await plan.frame();
+  const controls = plan.controls ? await plan.controls({ frame }) : null;
   const background = plan.background ? await plan.background({ frame }) : null;
-  const controls = plan.controls
-    ? await plan.controls({ frame, background: background as TBackground })
-    : null;
 
   return {
     frame,

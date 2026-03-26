@@ -29,3 +29,11 @@ export function assertPositiveInteger(value: unknown, key: string): number {
 
   return value;
 }
+
+export function assertObject<T extends object = Record<string, unknown>>(value: unknown, key: string): T {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error(`Missing or invalid ${key} configuration object`);
+  }
+
+  return value as T;
+}

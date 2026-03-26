@@ -258,6 +258,7 @@ export function assertMediaConfigShape(config: MediaConfig): void {
   assertStrictlyIncreasingPositiveWidths(config.image.widths?.medium, IMAGE_MEDIUM_WIDTHS_KEY);
   assertStrictlyIncreasingPositiveWidths(config.image.widths?.high, IMAGE_HIGH_WIDTHS_KEY);
 
+  assertPositiveScale(config.image.dprScale?.low, 'image.dprScale.low');
   assertPositiveScale(config.image.dprScale?.medium, 'image.dprScale.medium');
   assertPositiveScale(config.image.dprScale?.high, 'image.dprScale.high');
 }

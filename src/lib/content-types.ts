@@ -112,6 +112,7 @@ export interface SiteImageConfig {
     high: number[];
   };
   dprScale: {
+    low: number;
     medium: number;
     high: number;
   };

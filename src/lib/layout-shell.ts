@@ -81,8 +81,6 @@ export function buildShellStyle(
   shell: ShellVariant,
   overlayVariant: OverlayVariant | undefined,
   contentWidth: ContentWidth | string,
-  backgroundMobileImage: string,
-  backgroundDesktopImage: string
 ): string {
   const shellConfig = shellTokens[shell];
   const shellOverlayVariant = overlayVariant ?? SHELL_OVERLAY_DEFAULTS[shell];
@@ -90,8 +88,6 @@ export function buildShellStyle(
   const layoutContentWidth = resolveContentWidth(contentWidth);
 
   const shellStyleTokens: Record<string, string> = {
-    '--page-bg-image-mobile': backgroundMobileImage,
-    '--page-bg-image-desktop': backgroundDesktopImage,
     '--page-overlay': pageOverlay,
     '--layout-content-width': layoutContentWidth,
   };

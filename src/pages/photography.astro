@@ -98,20 +98,19 @@ const totalImageCount = categories.reduce((imageCount, category) => {
 </Layout>
 
 <script>
-  import { bootstrapDeferredMounts } from '../lib/deferred-mount-bootstrap';
-  import { buildDeferredMountBootstrapOptions } from '../lib/deferred-mount-page';
+  import {
+    buildDeferredMountBootstrapOptions,
+    initDeferredMountGroupSafely,
+  } from '../lib/deferred-mount-page';
 
-  try {
-    bootstrapDeferredMounts(
-      buildDeferredMountBootstrapOptions(
-        '.gallery-container[data-gallery-lazy-config]',
-        'galleryLazyConfig',
-        'gallery-image',
-      ),
-    );
-  } catch (e) {
-    console.error('Failed to initialize gallery deferred loading:', e);
-  }
+  initDeferredMountGroupSafely(
+    buildDeferredMountBootstrapOptions(
+      '.gallery-container[data-gallery-lazy-config]',
+      'galleryLazyConfig',
+      'gallery-image',
+    ),
+    'gallery',
+  );
 </script>
 
 <style>

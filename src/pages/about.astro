@@ -59,20 +59,19 @@ const profileName = profile.facts.find(({ id }) => id === 'name')?.value;
 </Layout>
 
 <script>
-  import { bootstrapDeferredMounts } from '../lib/deferred-mount-bootstrap';
-  import { buildDeferredMountBootstrapOptions } from '../lib/deferred-mount-page';
+  import {
+    buildDeferredMountBootstrapOptions,
+    initDeferredMountGroupSafely,
+  } from '../lib/deferred-mount-page';
 
-  try {
-    bootstrapDeferredMounts(
-      buildDeferredMountBootstrapOptions(
-        '.about-page[data-about-avatar-lazy-config]',
-        'aboutAvatarLazyConfig',
-        'about-avatar-image',
-      ),
-    );
-  } catch (e) {
-    console.error('Failed to initialize about avatar deferred loading:', e);
-  }
+  initDeferredMountGroupSafely(
+    buildDeferredMountBootstrapOptions(
+      '.about-page[data-about-avatar-lazy-config]',
+      'aboutAvatarLazyConfig',
+      'about-avatar-image',
+    ),
+    'about avatar',
+  );
 </script>
 
 <style>

@@ -2,7 +2,7 @@ import introductionRaw from '../../content/config/introduction.md?raw';
 import profile from '../../content/config/profile.json';
 import siteConfigRaw from '../../content/config/site.jsonc?raw';
 import { parse } from 'jsonc-parser';
-import { assertBoolean, assertFiniteNumber, assertString } from './assertions';
+import { assertBoolean, assertFiniteNumber, assertObject, assertString } from './assertions';
 
 import type {
   HomePageCarouselVisualConfig,
@@ -69,11 +69,7 @@ function resolveFeaturedCarouselVisual(visual: unknown): HomePageCarouselVisualC
 }
 
 function resolveStarfieldEffectConfig(config: unknown): StarfieldEffectConfig {
-  if (!config || typeof config !== 'object' || Array.isArray(config)) {
-    throw new Error('Missing or invalid effects.starfield configuration object');
-  }
-
-  const source = config as Partial<StarfieldEffectConfig>;
+  const source = assertObject<Partial<StarfieldEffectConfig>>(config, 'effects.starfield');
 
   const starDensity = source.starDensity;
   if (!starDensity || !['low', 'medium', 'high', 'ultra'].includes(starDensity)) {
@@ -81,11 +77,9 @@ function resolveStarfieldEffectConfig(config: unknown): StarfieldEffectConfig {
   }
 
   const starSize = source.starSize;
-  if (!starSize || typeof starSize !== 'object') {
-    throw new Error('Missing or invalid effects.starfield.starSize configuration');
-  }
-  const starSizeMin = assertFiniteNumber((starSize as { min: number }).min, 'effects.starfield.starSize.min');
-  const starSizeMax = assertFiniteNumber((starSize as { max: number }).max, 'effects.starfield.starSize.max');
+  const starSizeConfig = assertObject<{ min: number; max: number }>(starSize, 'effects.starfield.starSize');
+  const starSizeMin = assertFiniteNumber(starSizeConfig.min, 'effects.starfield.starSize.min');
+  const starSizeMax = assertFiniteNumber(starSizeConfig.max, 'effects.starfield.starSize.max');
   if (starSizeMin <= 0 || starSizeMax <= 0 || starSizeMin > starSizeMax) {
     throw new Error('Missing or invalid effects.starfield.starSize range (0 < min <= max required)');
   }
@@ -128,11 +122,12 @@ function resolveStarfieldEffectConfig(config: unknown): StarfieldEffectConfig {
   }
 
   const rotationSpeed = source.rotationSpeed;
-  if (!rotationSpeed || typeof rotationSpeed !== 'object' || Array.isArray(rotationSpeed)) {
-    throw new Error('Missing or invalid effects.starfield.rotationSpeed configuration');
-  }
-  const rotationSpeedMin = assertFiniteNumber((rotationSpeed as { min: number }).min, 'effects.starfield.rotationSpeed.min');
-  const rotationSpeedMax = assertFiniteNumber((rotationSpeed as { max: number }).max, 'effects.starfield.rotationSpeed.max');
+  const rotationSpeedConfig = assertObject<{ min: number; max: number }>(
+    rotationSpeed,
+    'effects.starfield.rotationSpeed',
+  );
+  const rotationSpeedMin = assertFiniteNumber(rotationSpeedConfig.min, 'effects.starfield.rotationSpeed.min');
+  const rotationSpeedMax = assertFiniteNumber(rotationSpeedConfig.max, 'effects.starfield.rotationSpeed.max');
   if (rotationSpeedMin < 0 || rotationSpeedMax < 0 || rotationSpeedMin > rotationSpeedMax) {
     throw new Error('Missing or invalid effects.starfield.rotationSpeed range (0 <= min <= max required)');
   }
@@ -185,11 +180,7 @@ function resolveStarfieldEffectConfig(config: unknown): StarfieldEffectConfig {
 }
 
 function resolveImageLazyLoadConfig(config: unknown): SiteImageConfig['lazyLoad'] {
-  if (!config || typeof config !== 'object' || Array.isArray(config)) {
-    throw new Error('Missing or invalid image.lazyLoad configuration object');
-  }
-
-  const source = config as Partial<SiteImageConfig['lazyLoad']>;
+  const source = assertObject<Partial<SiteImageConfig['lazyLoad']>>(config, 'image.lazyLoad');
   const rootMargin = assertString(source.rootMargin, 'image.lazyLoad.rootMargin');
   const localDebugDelayMs = assertFiniteNumber(
     source.localDebugDelayMs,
@@ -219,11 +210,7 @@ function resolveImagePlaceholderEffectConfig(config: unknown): SiteImageConfig['
 }
 
 function resolveSiteImageConfig(config: unknown): SiteImageConfig {
-  if (!config || typeof config !== 'object' || Array.isArray(config)) {
-    throw new Error('Missing or invalid image configuration object');
-  }
-
-  const source = config as Partial<SiteImageConfig>;
+  const source = assertObject<Partial<SiteImageConfig>>(config, 'image');
   const format = assertString(source.format, 'image.format');
   const quality = assertFiniteNumber(source.quality, 'image.quality');
 
@@ -232,9 +219,7 @@ function resolveSiteImageConfig(config: unknown): SiteImageConfig {
   }
 
   const widths = source.widths;
-  if (!widths || typeof widths !== 'object' || Array.isArray(widths)) {
-    throw new Error('Missing or invalid image.widths configuration object');
-  }
+  const widthConfig = assertObject<SiteImageConfig['widths']>(widths, 'image.widths');
 
   const normalizeWidths = (values: unknown, key: string): number[] => {
     if (!Array.isArray(values) || values.length === 0) {
@@ -249,14 +234,12 @@ function resolveSiteImageConfig(config: unknown): SiteImageConfig {
     });
   };
 
-  const dprScale = source.dprScale;
-  if (!dprScale || typeof dprScale !== 'object' || Array.isArray(dprScale)) {
-    throw new Error('Missing or invalid image.dprScale configuration object');
-  }
+  const dprScale = assertObject<SiteImageConfig['dprScale']>(source.dprScale, 'image.dprScale');
 
+  const lowScale = assertFiniteNumber(dprScale.low, 'image.dprScale.low');
   const mediumScale = assertFiniteNumber(dprScale.medium, 'image.dprScale.medium');
   const highScale = assertFiniteNumber(dprScale.high, 'image.dprScale.high');
-  if (mediumScale <= 0 || highScale <= 0) {
+  if (lowScale <= 0 || mediumScale <= 0 || highScale <= 0) {
     throw new Error('Missing or invalid image.dprScale values (must be > 0)');
   }
 
@@ -264,10 +247,11 @@ function resolveSiteImageConfig(config: unknown): SiteImageConfig {
     format,
     quality,
     widths: {
-      medium: normalizeWidths(widths.medium, 'image.widths.medium'),
-      high: normalizeWidths(widths.high, 'image.widths.high'),
+      medium: normalizeWidths(widthConfig.medium, 'image.widths.medium'),
+      high: normalizeWidths(widthConfig.high, 'image.widths.high'),
     },
     dprScale: {
+      low: lowScale,
       medium: mediumScale,
       high: highScale,
     },

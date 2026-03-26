@@ -45,7 +45,8 @@ Do not use `git` commands in this repository.
 
 ### Loading orchestration
 
-- Use `src/lib/page-load-orchestrator.ts` as the single entry for page-load priority (`frame -> background -> controls`).
+- Use `src/lib/page-load-orchestrator.ts` as the single entry for page-load priority (`frame -> controls -> background`).
+- Keep shell background requests non-blocking for foreground content by applying background-image CSS variables asynchronously in `src/layouts/Layout.astro`.
 - Build deferred-mount runtime payload/bootstrap options via `src/lib/deferred-mount-page.ts` to avoid page-level inline wiring duplication.
 
 ### Shared validation helpers

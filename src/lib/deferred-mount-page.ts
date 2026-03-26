@@ -1,5 +1,6 @@
 import type { SiteImageConfig } from './content-types';
 import type { DeferredMountBootstrapOptions } from './deferred-mount-bootstrap';
+import { bootstrapDeferredMounts } from './deferred-mount-bootstrap';
 import { resolveDeferredMountRuntimeConfig } from './page-load-orchestrator';
 
 export function buildDeferredMountRuntimePayload(
@@ -20,4 +21,15 @@ export function buildDeferredMountBootstrapOptions(
     configDataKey,
     mountGroup,
   };
+}
+
+export function initDeferredMountGroupSafely(
+  options: DeferredMountBootstrapOptions,
+  errorContext: string,
+): void {
+  try {
+    bootstrapDeferredMounts(options);
+  } catch (e) {
+    console.error(`Failed to initialize ${errorContext} deferred loading:`, e);
+  }
 }

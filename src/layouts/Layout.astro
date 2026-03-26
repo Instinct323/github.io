@@ -33,6 +33,15 @@ const DESKTOP_VIEWPORT_HEIGHT = 900;
 const BACKGROUND_MOBILE_ASPECT_RATIO = backgroundMobileSource.width / backgroundMobileSource.height;
 const BACKGROUND_DESKTOP_ASPECT_RATIO = backgroundDesktopSource.width / backgroundDesktopSource.height;
 
+type BackgroundVariantKey = 'mobile' | 'desktop';
+
+interface BackgroundVariantInput {
+  key: BackgroundVariantKey;
+  source: typeof backgroundMobileSource;
+  inferredWidth: number;
+  aspectRatio: number;
+}
+
 function selectBackgroundWidth(
   candidateWidths: number[],
   inferredWidth: number,
@@ -100,47 +109,52 @@ const layoutLoad = await orchestratePageLoad<LayoutFrameData, LayoutBackgroundDa
   background: async ({ frame }) => {
     const backgroundQuality = frame.mediaConfig.image.quality;
     const backgroundWidths = frame.mediaConfig.image.widths.high;
-    const backgroundMediumScale = frame.mediaConfig.image.dprScale.medium;
+    const backgroundDprScale = frame.mediaConfig.image.dprScale.medium;
+    const variants: BackgroundVariantInput[] = [
+      {
+        key: 'mobile',
+        source: backgroundMobileSource,
+        inferredWidth: mobileInferredWidth,
+        aspectRatio: BACKGROUND_MOBILE_ASPECT_RATIO,
+      },
+      {
+        key: 'desktop',
+        source: backgroundDesktopSource,
+        inferredWidth: desktopInferredWidth,
+        aspectRatio: BACKGROUND_DESKTOP_ASPECT_RATIO,
+      },
+    ];
 
-    const mobileWidth = selectBackgroundWidth(
-      backgroundWidths,
-      mobileInferredWidth,
-      backgroundMediumScale,
-      'mobile.medium',
-      backgroundMobileSource.width,
-    );
-    const desktopWidth = selectBackgroundWidth(
-      backgroundWidths,
-      desktopInferredWidth,
-      backgroundMediumScale,
-      'desktop.medium',
-      backgroundDesktopSource.width,
-    );
+    const backgroundVariantEntries = await Promise.all(variants.map(async (variant) => {
+      const width = selectBackgroundWidth(
+        backgroundWidths,
+        variant.inferredWidth,
+        backgroundDprScale,
+        `${variant.key}.medium`,
+        variant.source.width,
+      );
 
-    const [backgroundMobile, backgroundDesktop] = await Promise.all([
-      getImage({
-        src: backgroundMobileSource,
-        width: mobileWidth,
-        height: Math.ceil(mobileWidth / BACKGROUND_MOBILE_ASPECT_RATIO),
+      const image = await getImage({
+        src: variant.source,
+        width,
+        height: Math.ceil(width / variant.aspectRatio),
         fit: 'cover',
         position: 'center',
         format: 'webp',
         quality: backgroundQuality,
-      }),
-      getImage({
-        src: backgroundDesktopSource,
-        width: desktopWidth,
-        height: Math.ceil(desktopWidth / BACKGROUND_DESKTOP_ASPECT_RATIO),
-        fit: 'cover',
-        position: 'center',
-        format: 'webp',
-        quality: backgroundQuality,
-      }),
-    ]);
+      });
+
+      return [variant.key, image] as const;
+    }));
+
+    const backgroundByVariant = Object.fromEntries(backgroundVariantEntries) as Record<
+      BackgroundVariantKey,
+      Awaited<ReturnType<typeof getImage>>
+    >;
 
     return {
-      backgroundMobile,
-      backgroundDesktop,
+      backgroundMobile: backgroundByVariant.mobile,
+      backgroundDesktop: backgroundByVariant.desktop,
     };
   },
 });
@@ -152,8 +166,10 @@ const {
 const { backgroundMobile, backgroundDesktop } = layoutLoad.background;
 const siteUrl = Astro.site ?? new URL(siteMetadata.siteUrl);
 
-const backgroundMobileImage = `url('${backgroundMobile.src}')`;
-const backgroundDesktopImage = `url('${backgroundDesktop.src}')`;
+const shellBackgroundPayload = JSON.stringify({
+  mobileSrc: backgroundMobile.src,
+  desktopSrc: backgroundDesktop.src,
+});
 
 const pageMetadata = pageKey ? siteMetadata.pages[pageKey] : undefined;
 const resolvedTitle = title ?? pageMetadata?.title ?? siteMetadata.defaultTitle;
@@ -161,7 +177,7 @@ const resolvedDescription = description ?? pageMetadata?.description ?? siteMeta
 
 const canonicalUrl = new URL(Astro.url.pathname, siteUrl).toString();
 const sitemapUrl = new URL('/sitemap-index.xml', siteUrl).toString();
-const shellStyle = buildShellStyle(shell, overlayVariant, contentWidth, backgroundMobileImage, backgroundDesktopImage);
+const shellStyle = buildShellStyle(shell, overlayVariant, contentWidth);
 const starfieldConfig = effectsConfig.starfield;
 ---
 
@@ -179,7 +195,11 @@ const starfieldConfig = effectsConfig.starfield;
     />
   </head>
   <body data-shell={shell} style={shellStyle}>
-    <div class="site-frame" aria-hidden="true">
+    <div
+      class="site-frame"
+      aria-hidden="true"
+      data-shell-background={shellBackgroundPayload}
+    >
       <canvas class="site-stars-background"></canvas>
       <canvas
         class="site-stars"
@@ -194,9 +214,109 @@ const starfieldConfig = effectsConfig.starfield;
     </main>
     <script>
       import { initStarfield } from '../lib/starfield-runtime';
+      import { runWhenIdle } from '../lib/scheduling';
 
       const backgroundCanvas = document.querySelector<HTMLCanvasElement>('.site-stars-background');
       const starsCanvas = document.querySelector<HTMLCanvasElement>('.site-stars');
+      const siteFrame = document.querySelector<HTMLElement>('.site-frame[data-shell-background]');
+      const SHELL_BACKGROUND_CACHE_KEY = 'site-shell-background-payload-v1';
+
+      interface ShellBackgroundPayload {
+        mobileSrc: string;
+        desktopSrc: string;
+      }
+
+      const parseShellBackgroundPayload = (): {
+        payload: ShellBackgroundPayload;
+        serializedPayload: string;
+      } | null => {
+        if (!siteFrame) {
+          return null;
+        }
+
+        const serializedPayload = siteFrame.dataset.shellBackground;
+        if (!serializedPayload) {
+          throw new Error('Missing data-shell-background payload');
+        }
+
+        const payload = JSON.parse(serializedPayload) as {
+          mobileSrc?: string;
+          desktopSrc?: string;
+        };
+
+        if (!payload.mobileSrc || !payload.desktopSrc) {
+          throw new Error('Invalid shell background payload');
+        }
+
+        return {
+          payload: {
+            mobileSrc: payload.mobileSrc,
+            desktopSrc: payload.desktopSrc,
+          },
+          serializedPayload,
+        };
+      };
+
+      const applyShellBackgroundImages = (payload: ShellBackgroundPayload) => {
+        document.body.style.setProperty('--page-bg-image-mobile', `url('${payload.mobileSrc}')`);
+        document.body.style.setProperty('--page-bg-image-desktop', `url('${payload.desktopSrc}')`);
+      };
+
+      const applyShellBackgroundImagesWithCache = () => {
+        try {
+          const parsed = parseShellBackgroundPayload();
+          if (!parsed) {
+            return;
+          }
+
+          applyShellBackgroundImages(parsed.payload);
+
+          try {
+            window.sessionStorage.setItem(SHELL_BACKGROUND_CACHE_KEY, parsed.serializedPayload);
+          } catch {
+            // Ignore storage failures in privacy mode or restricted contexts.
+          }
+        } catch (e) {
+          console.error('Failed to apply shell background images:', e);
+        }
+      };
+
+      const applyShellBackgroundImagesFromSessionCache = (): boolean => {
+        try {
+          const parsed = parseShellBackgroundPayload();
+          if (!parsed) {
+            return true;
+          }
+
+          const cachedPayload = window.sessionStorage.getItem(SHELL_BACKGROUND_CACHE_KEY);
+          if (cachedPayload !== parsed.serializedPayload) {
+            return false;
+          }
+
+          applyShellBackgroundImages(parsed.payload);
+          return true;
+        } catch {
+          return false;
+        }
+      };
+
+      const scheduleShellBackgroundApply = () => {
+        runWhenIdle(() => {
+          applyShellBackgroundImagesWithCache();
+        }, {
+          timeout: 2000,
+          fallbackDelayMs: 180,
+        });
+      };
+
+      if (!applyShellBackgroundImagesFromSessionCache()) {
+        if (document.readyState === 'complete') {
+          scheduleShellBackgroundApply();
+        } else {
+          window.addEventListener('load', scheduleShellBackgroundApply, { once: true });
+        }
+      }
+
       if (backgroundCanvas && starsCanvas) {
         try {
           const serializedConfig = starsCanvas.dataset.starfield;

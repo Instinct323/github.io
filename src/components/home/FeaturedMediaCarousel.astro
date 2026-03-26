@@ -129,23 +129,24 @@ const nextIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
 )}
 
 {hasSlides && <script>
-  import { bootstrapDeferredMounts } from '../../lib/deferred-mount-bootstrap';
-  import { buildDeferredMountBootstrapOptions } from '../../lib/deferred-mount-page';
+  import {
+    buildDeferredMountBootstrapOptions,
+    initDeferredMountGroupSafely,
+  } from '../../lib/deferred-mount-page';
 
-  try {
-    bootstrapDeferredMounts(
-      buildDeferredMountBootstrapOptions(
-        '.home-carousel[data-carousel-lazy-config]',
-        'carouselLazyConfig',
-        'home-carousel-image',
-      ),
-    );
-  } catch (e) {
-    console.error('Failed to initialize home carousel deferred loading:', e);
-  }
+  initDeferredMountGroupSafely(
+    buildDeferredMountBootstrapOptions(
+      '.home-carousel[data-carousel-lazy-config]',
+      'carouselLazyConfig',
+      'home-carousel-image',
+    ),
+    'home carousel',
+  );
 </script>}
 
 {hasMultiSlides && <script>
+  import { runWhenIdle } from '../../lib/scheduling';
+
   const carouselRoot = document.querySelector('.home-carousel');
 
   if (carouselRoot instanceof HTMLElement) {
@@ -173,15 +174,12 @@ const nextIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
     };
 
     // Prewarm carousel module during idle time or early user intent.
-    try {
-      window.requestIdleCallback(() => {
-        void prewarmCarouselModule();
-      }, { timeout: 1200 });
-    } catch {
-      window.setTimeout(() => {
-        void prewarmCarouselModule();
-      }, 250);
-    }
+    runWhenIdle(() => {
+      void prewarmCarouselModule();
+    }, {
+      timeout: 1200,
+      fallbackDelayMs: 250,
+    });
 
     const prewarmOnIntent = () => {
       void prewarmCarouselModule();
