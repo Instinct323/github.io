@@ -112,7 +112,7 @@
       "high": 3
     },
     "lazyLoad": {
-      "rootMargin": "480px 0px",
+      "rootMargin": "100px 0px",
       "localDebugDelayMs": 1000
     },
     // ref: https://codepen.io/AlexWarnes/pen/jXYYKL
