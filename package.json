@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "astro dev --host",
     "check": "pnpm typecheck && pnpm lint && pnpm build",
-    "build": "node scripts/copy-blog-assets.js && astro build",
+    "build": "node scripts/copy-content-assets.js && astro build",
     "preview": "astro preview --host",
     "typecheck": "astro check",
     "lint": "node tests/verify-no-media-json-refs.js && node tests/verify-no-unused-tokens.js && eslint . --ext .js,.ts,.astro",

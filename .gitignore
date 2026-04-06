@@ -8,6 +8,7 @@ desktop.ini
 .vscode/
 
 # Astro/Node build artifacts
+public/
 node_modules/
 .astro/
 dist/
