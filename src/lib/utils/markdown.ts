@@ -1,5 +1,6 @@
 import MarkdownIt from 'markdown-it';
 import matter from 'gray-matter';
+import { katex } from '@mdit/plugin-katex';
 
 export interface RenderMarkdownOptions {
   fileURL?: string;
@@ -11,7 +12,7 @@ const md = new MarkdownIt({
   breaks: false,
   linkify: false,
   typographer: false,
-});
+}).use(katex);
 
 function resolveRelativePaths(html: string, fileURL: string): string {
   try {
@@ -71,7 +72,7 @@ export function renderMarkdown(markdown: string, options?: RenderMarkdownOptions
 export default renderMarkdown;
 
 interface ParseMarkdownResult {
-  title: string;
+  title: string | null;
   content: string;
 }
 
@@ -81,18 +82,11 @@ export function parseMarkdownWithFrontmatter(markdown: string): ParseMarkdownRes
   }
 
   const parsed = matter(markdown);
-
-  if (Object.keys(parsed.data).length === 0) {
-    throw new Error('Missing frontmatter');
-  }
-
-  const title = parsed.data.title;
-  if (!title || typeof title !== 'string' || title.trim().length === 0) {
-    throw new Error('Missing or empty title in frontmatter');
-  }
+  const title = parsed.data?.title;
+  const validTitle = typeof title === 'string' && title.trim().length > 0 ? title.trim() : null;
 
   return {
-    title: title.trim(),
+    title: validTitle,
     content: parsed.content.trim(),
   };
 }

@@ -39,8 +39,10 @@ export function loadBlogPosts(): BlogPost[] {
     const stats = statSync(absolutePath);
     const date = stats.mtime;
 
+    const title = parsed.title ?? slug;
+
     posts.push({
-      title: parsed.title,
+      title,
       date,
       content: parsed.content,
       slug,

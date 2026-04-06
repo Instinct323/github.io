@@ -45,33 +45,36 @@ title: Hello World
     expect(result.content).toBe('# Content here');
   });
 
-  it('throws on missing frontmatter', () => {
+  it('returns null title when frontmatter is missing', () => {
     const input = `# Just content
 No frontmatter here`;
 
-    expect(typeof parseMarkdownWithFrontmatter).toBe('function');
-    expect(() => parseMarkdownWithFrontmatter(input)).toThrow('frontmatter');
+    const result = parseMarkdownWithFrontmatter(input);
+    expect(result.title).toBeNull();
+    expect(result.content).toBe('# Just content\nNo frontmatter here');
   });
 
-  it('throws on malformed frontmatter', () => {
-    const input = `---
-invalid: yaml: content: here
----
-
-# Content`;
-
-    expect(typeof parseMarkdownWithFrontmatter).toBe('function');
-    expect(() => parseMarkdownWithFrontmatter(input)).toThrow();
-  });
-
-  it('throws on empty title', () => {
+  it('returns null title when title is empty', () => {
     const input = `---
 title: 
 ---
 
 # Content`;
 
-    expect(typeof parseMarkdownWithFrontmatter).toBe('function');
-    expect(() => parseMarkdownWithFrontmatter(input)).toThrow('title');
+    const result = parseMarkdownWithFrontmatter(input);
+    expect(result.title).toBeNull();
+    expect(result.content).toBe('# Content');
+  });
+
+  it('returns null title when title field is missing', () => {
+    const input = `---
+date: 2024-01-01
+---
+
+# Content`;
+
+    const result = parseMarkdownWithFrontmatter(input);
+    expect(result.title).toBeNull();
+    expect(result.content).toBe('# Content');
   });
 });

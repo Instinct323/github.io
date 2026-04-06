@@ -31,5 +31,5 @@ if __name__ == '__main__':
 
     execute(f"git add {dst}")
     execute(f"git add {dst} --renormalize")
-    execute(f"git commit -m \"add {file.stem}\"")
+    execute(f"git commit -m \"add {file.stem}\"", check=False)
     execute("git push")
