@@ -3,6 +3,7 @@ import os
 import shutil
 from datetime import datetime
 from pathlib import Path
+import time
 
 WORKDIR = Path(__file__).parent.parent
 
@@ -21,11 +22,11 @@ if __name__ == '__main__':
     file = Path(args.file).resolve()
     assert file.exists(), f"{file} does not exist."
     assert file.suffix == ".md", f"{file} is not a markdown file."
+    t = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime(file.stat().st_mtime))
 
     os.chdir(WORKDIR)
-    now = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
-    dst = Path("content/blog") / f"Report-{now}"
-    dst.mkdir(exist_ok=False)
+    dst = Path("content/blog") / f"Report-{t}"
+    dst.mkdir(exist_ok=True)
     shutil.copy(file, dst / "README.md")
 
     execute(f"git add {dst}")
