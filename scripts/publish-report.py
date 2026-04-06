@@ -1,6 +1,7 @@
 import argparse
 import os
 import shutil
+from datetime import datetime
 from pathlib import Path
 
 WORKDIR = Path(__file__).parent.parent
@@ -22,7 +23,8 @@ if __name__ == '__main__':
     assert file.suffix == ".md", f"{file} is not a markdown file."
 
     os.chdir(WORKDIR)
-    dst = Path("content/blog") / file.stem
+    now = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
+    dst = Path("content/blog") / f"Report-{now}"
     dst.mkdir(exist_ok=False)
     shutil.copy(file, dst / "README.md")
 
