@@ -7,5 +7,13 @@ declare module 'markdown-it' {
     typographer?: boolean;
     [key: string]: unknown;
   }
+
+  class MarkdownIt {
+    constructor(options?: Options);
+    render(markdown: string): string;
+    use(plugin: unknown): this;
+  }
+
+  export = MarkdownIt;
 }
 declare module '@mdit/plugin-katex';
