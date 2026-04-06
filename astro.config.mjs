@@ -11,4 +11,9 @@ export default defineConfig({
     },
   },
   integrations: [sitemap(), react()],
+  vite: {
+    ssr: {
+      noExternal: ['@mdit/plugin-katex'],
+    },
+  },
 });

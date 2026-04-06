@@ -1,11 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { loadBlogPosts } from '../lib/loaders/blog-loader';
-import { renderMarkdown } from '../lib/utils/markdown';
+import { renderMarkdownWithKatex } from '../lib/utils/markdown';
 
 const posts = loadBlogPosts();
 const initialPost = posts[0];
-const initialContentHtml = renderMarkdown(initialPost.content, { fileURL: initialPost.baseUrl });
+const initialContentHtml = renderMarkdownWithKatex(initialPost.content, { fileURL: initialPost.baseUrl });
 ---
 
 <Layout
@@ -193,7 +193,7 @@ const initialContentHtml = renderMarkdown(initialPost.content, { fileURL: initia
 </style>
 
 <script>
-  import { renderMarkdown } from '../lib/utils/markdown';
+  import { renderMarkdown } from '../lib/utils/markdown-client';
 
   document.addEventListener('DOMContentLoaded', () => {
     const blogList = document.getElementById('blog-list');
