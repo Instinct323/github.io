@@ -15,7 +15,8 @@
     "typecheck": "astro check",
     "lint": "node tests/verify-no-media-json-refs.js && node tests/verify-no-unused-tokens.js && eslint . --ext .js,.ts,.astro",
     "test:site": "node tests/assert-site-output.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "predeploy": "node scripts/pre-deploy-check.js"
   },
   "dependencies": {
     "@astrojs/react": "^5.0.2",

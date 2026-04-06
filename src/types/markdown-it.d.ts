@@ -1,5 +1,5 @@
 declare module 'markdown-it' {
-  interface Options {
+  export interface Options {
     html?: boolean;
     xhtmlOut?: boolean;
     breaks?: boolean;
@@ -9,11 +9,11 @@ declare module 'markdown-it' {
   }
 
   class MarkdownIt {
-    constructor(options?: Options);
-    render(markdown: string): string;
-    use(plugin: unknown): this;
+    constructor(_options?: Options);
+    render(_markdown: string): string;
+    use(_plugin: unknown): this;
   }
 
-  export = MarkdownIt;
+  export default MarkdownIt;
 }
 declare module '@mdit/plugin-katex';

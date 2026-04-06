@@ -46,20 +46,19 @@ export function resolveRelativePaths(html: string, fileURL: string): string {
 }
 
 export interface MarkdownRenderer {
-  render(markdown: string): string;
+  render(_markdown: string): string;
 }
 
-export function createMarkdownRenderer(options?: MarkdownIt.Options): MarkdownRenderer {
+export function createMarkdownRenderer(): MarkdownRenderer {
   const md = new MarkdownIt({
     html: false,
     xhtmlOut: false,
     breaks: false,
     linkify: false,
     typographer: false,
-    ...options,
   });
 
   return {
-    render: (markdown: string): string => md.render(markdown),
+    render: (_markdown: string): string => md.render(_markdown),
   };
 }
